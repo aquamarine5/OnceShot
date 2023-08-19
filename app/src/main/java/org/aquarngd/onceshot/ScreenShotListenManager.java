@@ -36,13 +36,6 @@ public class ScreenShotListenManager {
     private static final String TAG = "ScreenShotListenManager";
 
     /**
-     * 读取媒体数据库时需要读取的列
-     */
-    private static final String[] MEDIA_PROJECTIONS = {
-            MediaStore.Images.ImageColumns.DATA,
-            MediaStore.Images.ImageColumns.DATE_TAKEN,
-    };
-    /**
      * 读取媒体数据库时需要读取的列, 其中 WIDTH 和 HEIGHT 字段在 API 16 以后才有
      */
     private static final String[] MEDIA_PROJECTIONS_API_16 = {
@@ -68,7 +61,7 @@ public class ScreenShotListenManager {
      */
     private final static List<String> sHasCallbackPaths = new ArrayList<String>();
 
-    private Context mContext;
+    private final Context mContext;
 
     private OnScreenShotListener mListener;
 
@@ -123,8 +116,8 @@ public class ScreenShotListenManager {
         mStartListenTime = System.currentTimeMillis();
 
         // 创建内容观察者
-        mInternalObserver = new MediaContentObserver(MediaStore.Images.Media.INTERNAL_CONTENT_URI, mUiHandler);
-        mExternalObserver = new MediaContentObserver(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, mUiHandler);
+        mInternalObserver = new MediaContentObserver(MediaStore.Images.Media.INTERNAL_CONTENT_URI, null);
+        mExternalObserver = new MediaContentObserver(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, null);
 
         // 注册内容观察者
         if (Build.VERSION.SDK_INT < 29) { //Android 9及以下版本,否则不会回调onChange()
@@ -201,13 +194,13 @@ public class ScreenShotListenManager {
 
                 cursor = mContext.getContentResolver().query(
                         contentUri,
-                        Build.VERSION.SDK_INT < 16 ? MEDIA_PROJECTIONS : MEDIA_PROJECTIONS_API_16,
+                        MEDIA_PROJECTIONS_API_16,
                         bundle, null
                 );
             } else {
                 cursor = mContext.getContentResolver().query(
                         contentUri,
-                        Build.VERSION.SDK_INT < 16 ? MEDIA_PROJECTIONS : MEDIA_PROJECTIONS_API_16,
+                        MEDIA_PROJECTIONS_API_16,
                         null,
                         null,
                         MediaStore.Images.ImageColumns.DATE_ADDED + " desc limit 1"
@@ -228,10 +221,8 @@ public class ScreenShotListenManager {
             int dateTakenIndex = cursor.getColumnIndex(MediaStore.Images.ImageColumns.DATE_TAKEN);
             int widthIndex = -1;
             int heightIndex = -1;
-            if (Build.VERSION.SDK_INT >= 16) {
-                widthIndex = cursor.getColumnIndex(MediaStore.Images.ImageColumns.WIDTH);
-                heightIndex = cursor.getColumnIndex(MediaStore.Images.ImageColumns.HEIGHT);
-            }
+            widthIndex = cursor.getColumnIndex(MediaStore.Images.ImageColumns.WIDTH);
+            heightIndex = cursor.getColumnIndex(MediaStore.Images.ImageColumns.HEIGHT);
 
             // 获取行数据
             String data = cursor.getString(dataIndex);
@@ -294,9 +285,13 @@ public class ScreenShotListenManager {
          */
         // 如果加入数据库的时间在开始监听之前, 或者与当前时间相差大于10秒, 则认为当前没有截屏
         if (dateTaken < mStartListenTime || (System.currentTimeMillis() - dateTaken) > 10 * 1000) {
+            Log.i(TAG, "checkScreenShot: time");
             return false;
         }
 
+        WindowManager windowManager=(WindowManager)mContext.getSystemService(Context.WINDOW_SERVICE);
+        Display display=windowManager.getDefaultDisplay();
+        display.getRealSize(sScreenRealSize);
         /*
          * 判断依据二: 尺寸判断
          */
@@ -304,6 +299,7 @@ public class ScreenShotListenManager {
             // 如果图片尺寸超出屏幕, 则认为当前没有截屏
             if (!((width <= sScreenRealSize.x && height <= sScreenRealSize.y)
                     || (height <= sScreenRealSize.x && width <= sScreenRealSize.y))) {
+                Log.i(TAG, "checkScreenShot: size"+sScreenRealSize.x+" "+sScreenRealSize.y);
                 return false;
             }
         }
@@ -312,6 +308,8 @@ public class ScreenShotListenManager {
          * 判断依据三: 路径判断
          */
         if (TextUtils.isEmpty(data)) {
+
+            Log.i(TAG, "checkScreenShot: isempty");
             return false;
         }
         data = data.toLowerCase();
@@ -321,6 +319,7 @@ public class ScreenShotListenManager {
                 return true;
             }
         }
+        Log.i(TAG, "checkScreenShot: issssssssssy");
 
         return false;
     }
@@ -337,9 +336,7 @@ public class ScreenShotListenManager {
         }
         // 大概缓存15~20条记录便可
         if (sHasCallbackPaths.size() >= 20) {
-            for (int i = 0; i < 5; i++) {
-                sHasCallbackPaths.remove(0);
-            }
+            sHasCallbackPaths.subList(0, 5).clear();
         }
         sHasCallbackPaths.add(imagePath);
         return false;
@@ -354,21 +351,7 @@ public class ScreenShotListenManager {
             screenSize = new Point();
             WindowManager windowManager = (WindowManager) mContext.getSystemService(Context.WINDOW_SERVICE);
             Display defaultDisplay = windowManager.getDefaultDisplay();
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
-                defaultDisplay.getRealSize(screenSize);
-            } else {
-                try {
-                    Method mGetRawW = Display.class.getMethod("getRawWidth");
-                    Method mGetRawH = Display.class.getMethod("getRawHeight");
-                    screenSize.set(
-                            (Integer) mGetRawW.invoke(defaultDisplay),
-                            (Integer) mGetRawH.invoke(defaultDisplay)
-                    );
-                } catch (Exception e) {
-                    screenSize.set(defaultDisplay.getWidth(), defaultDisplay.getHeight());
-                    e.printStackTrace();
-                }
-            }
+            defaultDisplay.getRealSize(screenSize);
         } catch (Exception e) {
             e.printStackTrace();
         }

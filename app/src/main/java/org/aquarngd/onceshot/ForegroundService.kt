@@ -14,12 +14,13 @@ import androidx.core.app.NotificationCompat
 
 class ForegroundService: Service() {
     companion object{
-        val threadName="org.aquarngd.onceshot.screenshot_observer"
-        val notificationId="org.aqaurngd.onceshot.notification"
-        val channelId="org.aquarngd.onceshot.notification_channel"
+        const val threadName="org.aquarngd.onceshot.screenshot_observer"
+        const val notificationId="org.aqaurngd.onceshot.notification"
+        const val channelId="org.aquarngd.onceshot.notification_channel"
+        const val foregroundServiceChannelId="org.aquarngd.onceshot.foreground_channel"
     }
 
-    var screenShotListenManager=ScreenShotListenManager.newInstance(this)
+    var screenShotListenManager: ScreenShotListenManager =ScreenShotListenManager.newInstance(this)
     var isLive=false
 
     override fun onBind(intent: Intent?): IBinder? {
@@ -67,7 +68,8 @@ class ForegroundService: Service() {
     private fun createNotification(){
         val manager=getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         if(Build.VERSION.SDK_INT>=Build.VERSION_CODES.O){
-            val channel=NotificationChannel(notificationId,channelId,NotificationManager.IMPORTANCE_HIGH)
+            val channel=NotificationChannel(notificationId,
+                foregroundServiceChannelId,NotificationManager.IMPORTANCE_HIGH)
             channel.description="Foreground"
             manager.createNotificationChannel(channel)
         }

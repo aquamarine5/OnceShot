@@ -1,8 +1,10 @@
 package org.aquarngd.onceshot
 
 import android.content.Intent
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.provider.Settings
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
@@ -23,6 +25,17 @@ class MainActivity : ComponentActivity() {
             } else{
                 startService(this)
             }
+        }
+        if(Build.VERSION.SDK_INT>Build.VERSION_CODES.R){
+            startActivity(Intent().apply {
+                action= Settings.ACTION_REQUEST_MANAGE_MEDIA
+            })
+
+            startActivity(
+                Intent(
+                    Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION
+                )
+            )
         }
         setContent {
             OnceShotTheme {

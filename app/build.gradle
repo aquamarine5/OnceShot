@@ -11,8 +11,8 @@ android {
         applicationId "org.aquarngd.onceshot"
         minSdk 24
         targetSdk 34
-        versionCode 100010819
-        versionName "1.0"
+        versionCode 1000102
+        versionName "1.0.0.2"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="nof_title">OnceShot 服务正在运行中</string>
+    <string name="nof_text">OnceShot 通过设置前台服务保持持续后台运行</string>
+    <string name="nof_channel_description">前台服务</string>
+    <string name="nof_screenshot_channel">捕捉到的截图事件</string>
+    <string name="nof_button_sharedelete">分享后刪除</string>
+    <string name="share_screenshot">分享截图</string>
+</resources>

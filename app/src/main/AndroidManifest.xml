@@ -35,7 +35,8 @@
             </intent-filter>
         </activity>
         <activity android:name=".MediaStoreActivity"
-            android:label="MediaStoreActivity"/>
+            android:label="MediaStoreActivity"
+            android:excludeFromRecents="true"/>
         <service
             android:name=".ForegroundService"
             android:label="ForegroundService"

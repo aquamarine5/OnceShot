@@ -40,7 +40,7 @@ public class ScreenShotListenManager {
      */
     private static final String[] MEDIA_PROJECTIONS_API_16 = {
             MediaStore.Images.ImageColumns.DATA,
-            MediaStore.Images.ImageColumns.RELATIVE_PATH,
+            MediaStore.Images.ImageColumns._ID,
             MediaStore.Images.ImageColumns.DATE_TAKEN,
             MediaStore.Images.ImageColumns.WIDTH,
             MediaStore.Images.ImageColumns.HEIGHT,
@@ -224,8 +224,8 @@ public class ScreenShotListenManager {
             int heightIndex = -1;
             widthIndex = cursor.getColumnIndex(MediaStore.Images.ImageColumns.WIDTH);
             heightIndex = cursor.getColumnIndex(MediaStore.Images.ImageColumns.HEIGHT);
-            int relativeIndex=cursor.getColumnIndex(MediaStore.Images.ImageColumns.RELATIVE_PATH);
-            String relativeData=cursor.getString(relativeIndex);
+            int idIndex=cursor.getColumnIndex(MediaStore.Images.ImageColumns._ID);
+            Long idData=cursor.getLong(idIndex);
 
             // 获取行数据
             String data = cursor.getString(dataIndex);
@@ -243,7 +243,7 @@ public class ScreenShotListenManager {
             }
 
             // 处理获取到的第一行数据
-            handleMediaRowData(data, dateTaken, width, height,relativeData);
+            handleMediaRowData(data, dateTaken, width, height,idData);
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -265,12 +265,12 @@ public class ScreenShotListenManager {
     /**
      * 处理获取到的一行数据
      */
-    private void handleMediaRowData(String data, long dateTaken, int width, int height,String relativePath) {
+    private void handleMediaRowData(String data, long dateTaken, int width, int height,Long idData) {
         if (checkScreenShot(data, dateTaken, width, height)) {
             Log.d(TAG, "ScreenShot: path = " + data + "; size = " + width + " * " + height
                     + "; date = " + dateTaken);
             if (mListener != null && !checkCallback(data)) {
-                mListener.onShot(relativePath);
+                mListener.onShot(idData);
             }
         } else {
             // 如果在观察区间媒体数据库有数据改变，又不符合截屏规则，则输出到 log 待分析
@@ -374,7 +374,7 @@ public class ScreenShotListenManager {
     }
 
     public interface OnScreenShotListener {
-        void onShot(String imagePath);
+        void onShot(Long id);
     }
 
     private static void assertInMainThread() {

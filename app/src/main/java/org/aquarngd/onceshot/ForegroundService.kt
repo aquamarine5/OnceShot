@@ -4,6 +4,7 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
+import android.content.ContentUris
 import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
@@ -60,17 +61,18 @@ class ForegroundService: Service() {
         stopForeground(STOP_FOREGROUND_DETACH)
     }
     private fun shareImage(){
-        startActivity(Intent.createChooser(Intent().apply {
+        applicationContext.startActivity(Intent.createChooser(Intent().apply {
             action = Intent.ACTION_SEND
             putExtra(Intent.EXTRA_STREAM,relativePath)
             type = "image/*"
         },getString(R.string.share_screenshot)))
     }
     private fun deleteImage(){
-        startActivity(Intent().apply {
+        application.startActivity(Intent().apply {
             setClass(applicationContext,MediaStoreActivity::class.java)
             putExtra(intent_path_id,relativePath)
             putExtra(intent_type_id, INTENT_ACTIVITY_DELETE)
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         })
     }
     private fun parseIntentAction(intent:Intent){
@@ -79,7 +81,7 @@ class ForegroundService: Service() {
                 if(relativePath==null){
                     Log.w(classTag,"relativePath is null")
                 }else{
-                    shareImage()
+                    //shareImage()
                     deleteImage()
                 }
             }
@@ -92,15 +94,22 @@ class ForegroundService: Service() {
     private fun startFileObserver(){
         screenShotListenManager.setListener {
             sendNotification(it)
+            relativePath=ContentUris.withAppendedId(
+                MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                it).path
         }
         screenShotListenManager.startListen()
     }
-    private fun readImage(relativePath:String): Bitmap {
-        if(Build.VERSION.SDK_INT>=29)
-        return ImageDecoder.decodeBitmap(ImageDecoder.createSource(contentResolver,Uri.parse(relativePath)))
+    private fun readImage(id:Long): Bitmap {
+        if(Build.VERSION.SDK_INT>=29){
+            Log.d(classTag, id.toString())
+            return ImageDecoder.decodeBitmap(ImageDecoder.createSource(contentResolver, ContentUris.withAppendedId(
+                MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                id)))
+        }
         else return Bitmap.createBitmap(111,111,Bitmap.Config.ARGB_8888);
     }
-    private fun sendNotification(path:String){
+    private fun sendNotification(id:Long){
         val manager=getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
         if(Build.VERSION.SDK_INT>=Build.VERSION_CODES.O){
@@ -109,15 +118,15 @@ class ForegroundService: Service() {
             manager.createNotificationChannel(channel)
         }
         val builder=NotificationCompat.Builder(this,notificationId).apply {
-            setSmallIcon(R.drawable.ic_launcher_foreground)
-            setContentTitle(path)
-            setStyle(NotificationCompat.BigPictureStyle(this).bigPicture(readImage(path)))
+            setSmallIcon(R.drawable.onceshot_logo)
+            setContentTitle("path")
+            setStyle(NotificationCompat.BigPictureStyle(this).bigPicture(readImage(id)))
             addAction(NotificationCompat.Action(R.drawable.stackbricks_logo,getString(R.string.nof_button_sharedelete)
-                ,PendingIntent.getService(applicationContext,0,Intent().apply {
-                    setClass(applicationContext,ForegroundService::class.java)
-                    putExtra(intent_type_id, INTENT_SHARE_DELETE)
-            },PendingIntent.FLAG_UPDATE_CURRENT)))
-            setContentText(path)
+                ,PendingIntent.getActivity(applicationContext,0,Intent().apply {
+                    setClass(applicationContext,MediaStoreActivity::class.java)
+                    putExtra(intent_type_id, INTENT_ACTIVITY_DELETE)
+            },PendingIntent.FLAG_IMMUTABLE)))
+            setContentText("path")
             setWhen(System.currentTimeMillis())
         }
         manager.notify(22,builder.build())

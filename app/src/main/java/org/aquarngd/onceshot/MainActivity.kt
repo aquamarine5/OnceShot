@@ -25,8 +25,9 @@ import org.aquarngd.onceshot.ui.theme.OnceShotTheme
 class MainActivity : ComponentActivity() {
     companion object{
         const val REQUEST_PERMISSION_NOF=1001
+        const val REQUEST_PERMISSION_IMAGE=1002
     }
-    fun checkPermission(){
+    private fun checkPermission(){
 
         if(Build.VERSION.SDK_INT>Build.VERSION_CODES.R){
             if(!MediaStore.canManageMedia(applicationContext)){
@@ -47,6 +48,7 @@ class MainActivity : ComponentActivity() {
 
         }
         if(Build.VERSION.SDK_INT>=Build.VERSION_CODES.TIRAMISU){
+
             if(applicationContext.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)
                 !=PackageManager.PERMISSION_GRANTED){
                 requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS),
@@ -55,7 +57,7 @@ class MainActivity : ComponentActivity() {
             if(applicationContext.checkSelfPermission(Manifest.permission.READ_MEDIA_IMAGES)
                 !=PackageManager.PERMISSION_GRANTED){
                 requestPermissions(arrayOf(Manifest.permission.READ_MEDIA_IMAGES),
-                    REQUEST_PERMISSION_NOF)
+                    REQUEST_PERMISSION_IMAGE)
             }
         }
         if(applicationContext.checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE)

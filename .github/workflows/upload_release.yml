@@ -28,6 +28,6 @@ jobs:
         sudo apt-get -y install tree
         tree
     - name: Upload apk file
-      run: gh release upload ${{ steps.get_version.outputs.VERSION }} app/build/outputs/apk/debug/app-debug.apk
+      run: gh release upload ${{ github.ref:10}} app/build/outputs/apk/debug/app-debug.apk
       env:
         GH_TOKEN: ${{ github.token }}

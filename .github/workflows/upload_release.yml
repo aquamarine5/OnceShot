@@ -24,6 +24,6 @@ jobs:
     - name: Build apk file with Gradle
       run: ./gradlew assembleDebug
     - name: Upload apk file
-      run: gh release upload ${{ github.ref }} app/build/outputs/apk/app-debug.apk
+      run: gh release upload ${{ github.ref }} app/build/outputs/apk/debug/app-debug.apk
       env:
         GH_TOKEN: ${{ github.token }}

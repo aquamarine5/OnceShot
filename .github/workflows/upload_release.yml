@@ -25,7 +25,7 @@ jobs:
       run: ./gradlew assembleDebug
     - name: Get version code
       id: version
-      run: echo ::set-output name=VERSION::${github.ref/refs\/tags\//}
+      run: echo ::set-output name=VERSION::${GITHUB_REF:10}
     - name: Upload apk file
       run: gh release upload ${{steps.version.outputs.VERSION}} app/build/outputs/apk/debug/app-debug.apk
       env:

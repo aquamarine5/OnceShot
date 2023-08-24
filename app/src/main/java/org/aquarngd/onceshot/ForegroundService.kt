@@ -8,6 +8,7 @@ import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.ImageDecoder
 import android.net.Uri
 import android.os.Build
 import android.os.Handler
@@ -95,10 +96,8 @@ class ForegroundService: Service() {
         screenShotListenManager.startListen()
     }
     private fun readImage(relativePath:String): Bitmap {
-        if(Build.VERSION.SDK_INT>29)
-        return contentResolver.openInputStream(MediaStore.getMediaUri(applicationContext, Uri.parse(relativePath))!!).use{
-            BitmapFactory.decodeStream(it)
-        }
+        if(Build.VERSION.SDK_INT>=29)
+        return ImageDecoder.decodeBitmap(ImageDecoder.createSource(contentResolver,Uri.parse(relativePath)))
         else return Bitmap.createBitmap(111,111,Bitmap.Config.ARGB_8888);
     }
     private fun sendNotification(path:String){

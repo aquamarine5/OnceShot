@@ -37,6 +37,7 @@ class ForegroundService: Service() {
     var screenShotListenManager: ScreenShotListenManager =ScreenShotListenManager.newInstance(this)
     var isLive=false
     var relativePath:String?=null
+    var url:Uri?=null
 
     override fun onBind(intent: Intent?): IBinder? {
         return null
@@ -48,6 +49,7 @@ class ForegroundService: Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        if(intent!=null) Log.d(classTag,isLive.toString())
         if(!isLive){
             isLive=true
             startFileObserver()
@@ -61,13 +63,19 @@ class ForegroundService: Service() {
         stopForeground(STOP_FOREGROUND_DETACH)
     }
     private fun shareImage(){
-        applicationContext.startActivity(Intent.createChooser(Intent().apply {
+        Log.d(classTag,relativePath.toString())
+        val chooserIntent=Intent.createChooser(Intent().apply {
             action = Intent.ACTION_SEND
-            putExtra(Intent.EXTRA_STREAM,relativePath)
+            putExtra(Intent.EXTRA_STREAM,url)
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             type = "image/*"
-        },getString(R.string.share_screenshot)))
+        },getString(R.string.share_screenshot))
+        chooserIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        applicationContext.startActivity(chooserIntent)
+        Log.d(classTag,"ShareImage")
     }
     private fun deleteImage(){
+        Log.d(classTag,"DeleteImage")
         application.startActivity(Intent().apply {
             setClass(applicationContext,MediaStoreActivity::class.java)
             putExtra(intent_path_id,relativePath)
@@ -76,12 +84,13 @@ class ForegroundService: Service() {
         })
     }
     private fun parseIntentAction(intent:Intent){
+        //relativePath=intent.getStringExtra("a")
         when(intent.getIntExtra(intent_type_id, INTENT_DEFAULT)){
             INTENT_SHARE_DELETE->{
                 if(relativePath==null){
                     Log.w(classTag,"relativePath is null")
                 }else{
-                    //shareImage()
+                    shareImage()
                     deleteImage()
                 }
             }
@@ -96,16 +105,21 @@ class ForegroundService: Service() {
             sendNotification(it)
             relativePath=ContentUris.withAppendedId(
                 MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
-                it).path
+                it).encodedPath
+            url=ContentUris.withAppendedId(
+                MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                it)
         }
         screenShotListenManager.startListen()
     }
     private fun readImage(id:Long): Bitmap {
+        val uri=ContentUris.withAppendedId(
+            MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+            id)
+        relativePath=uri.encodedPath
         if(Build.VERSION.SDK_INT>=29){
             Log.d(classTag, id.toString())
-            return ImageDecoder.decodeBitmap(ImageDecoder.createSource(contentResolver, ContentUris.withAppendedId(
-                MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
-                id)))
+            return ImageDecoder.decodeBitmap(ImageDecoder.createSource(contentResolver, uri))
         }
         else return Bitmap.createBitmap(111,111,Bitmap.Config.ARGB_8888);
     }
@@ -121,11 +135,13 @@ class ForegroundService: Service() {
             setSmallIcon(R.drawable.onceshot_logo)
             setContentTitle("path")
             setStyle(NotificationCompat.BigPictureStyle(this).bigPicture(readImage(id)))
-            addAction(NotificationCompat.Action(R.drawable.stackbricks_logo,getString(R.string.nof_button_sharedelete)
-                ,PendingIntent.getActivity(applicationContext,0,Intent().apply {
-                    setClass(applicationContext,MediaStoreActivity::class.java)
-                    putExtra(intent_type_id, INTENT_ACTIVITY_DELETE)
-            },PendingIntent.FLAG_IMMUTABLE)))
+            setLargeIcon(readImage(id))
+            priority = NotificationCompat.PRIORITY_HIGH
+            setContentIntent(PendingIntent.getService(applicationContext,0,Intent().apply {
+                    setClass(applicationContext,ForegroundService::class.java)
+                    putExtra(intent_type_id, INTENT_SHARE_DELETE)
+                    putExtra("a",relativePath)
+            },PendingIntent.FLAG_IMMUTABLE))
             setContentText("path")
             setWhen(System.currentTimeMillis())
         }

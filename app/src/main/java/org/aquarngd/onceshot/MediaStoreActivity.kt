@@ -7,6 +7,7 @@ import android.os.Build
 import android.os.Bundle
 import android.os.PersistableBundle
 import android.provider.MediaStore
+import android.util.Log
 
 class MediaStoreActivity:Activity() {
     var path:String?=null
@@ -28,11 +29,14 @@ class MediaStoreActivity:Activity() {
     override fun onCreate(savedInstanceState: Bundle?, persistentState: PersistableBundle?) {
         if(Build.VERSION.SDK_INT>=Build.VERSION_CODES.R){ // Android 11+
             val path=intent.getStringExtra(ForegroundService.intent_path_id)
+
+            Log.d("MediaStoreActivity",intent.getIntExtra(ForegroundService.intent_type_id,ForegroundService.INTENT_DEFAULT).toString())
             when(intent.getIntExtra(ForegroundService.intent_type_id,ForegroundService.INTENT_DEFAULT)){
                 ForegroundService.INTENT_ACTIVITY_DELETE->{
                     startIntentSenderForResult(MediaStore.createDeleteRequest(contentResolver, listOf(
                         Uri.parse(path)
                     )).intentSender,11,null,0,0,0)
+                    Log.d("MediaStoreActivity","DeleteIntent")
                 }
             }
         }

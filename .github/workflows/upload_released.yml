@@ -2,7 +2,7 @@ name: Android Upload Release CI
 
 on:
   release:
-    types: [created]
+    types: [released]
   
 
 jobs:
@@ -23,7 +23,10 @@ jobs:
       run: chmod +x gradlew
     - name: Build apk file with Gradle
       run: ./gradlew assembleDebug
+    - name: Get version code
+      id: version
+      run: echo "VERSION=${GITHUB_REF:10}" >> $GITHUB_OUTPUT
     - name: Upload apk file
-      run: gh release upload ${{ github.ref }} app/build/outputs/apk/debug/app-debug.apk
+      run: gh release upload ${{steps.version.outputs.VERSION}} app/build/outputs/apk/debug/app-debug.apk
       env:
         GH_TOKEN: ${{ github.token }}

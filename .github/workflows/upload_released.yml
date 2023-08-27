@@ -22,11 +22,11 @@ jobs:
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
     - name: Build apk file with Gradle
-      run: ./gradlew assembleDebug
+      run: ./gradlew assembleRelease
     - name: Get version code
       id: version
       run: echo "VERSION=${GITHUB_REF:10}" >> $GITHUB_OUTPUT
     - name: Upload apk file
-      run: gh release upload ${{steps.version.outputs.VERSION}} app/build/outputs/apk/debug/app-debug.apk
+      run: gh release upload ${{steps.version.outputs.VERSION}} app/build/outputs/apk/release/app-release.apk
       env:
         GH_TOKEN: ${{ github.token }}

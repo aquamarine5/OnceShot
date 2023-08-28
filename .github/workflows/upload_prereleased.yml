@@ -2,7 +2,7 @@ name: Android Upload Release CI
 
 on:
   release:
-    types: [released]
+    types: [prereleased]
   
 
 jobs:

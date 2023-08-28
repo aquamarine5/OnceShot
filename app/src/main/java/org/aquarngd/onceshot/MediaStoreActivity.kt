@@ -1,6 +1,7 @@
 package org.aquarngd.onceshot
 
 import android.app.Activity
+import android.content.ContentUris
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
@@ -10,36 +11,47 @@ import android.provider.MediaStore
 import android.util.Log
 
 class MediaStoreActivity:Activity() {
+    companion object{
+        const val classTag="MediaStoreActivity"
+        const val INTENT_ACTIVITY_DELETE=11
+        const val INTENT_SHARE_DELETE=12
+    }
     var path:String?=null
+    var uri:Uri?=null
     private fun shareImage(){
-        applicationContext.startActivity(Intent.createChooser(Intent().apply {
+        val chooserIntent=Intent.createChooser(Intent().apply {
             action = Intent.ACTION_SEND
-            putExtra(Intent.EXTRA_STREAM,path)
+            putExtra(Intent.EXTRA_STREAM,uri)
             type = "image/*"
-        },getString(R.string.share_screenshot)))
+        },getString(R.string.share_screenshot))
+        startActivity(chooserIntent)
+        Log.d(classTag,"ShareImage")
     }
     private fun deleteImage(){
-        application.startActivity(Intent().apply {
-            setClass(applicationContext,MediaStoreActivity::class.java)
-            putExtra(ForegroundService.intent_path_id,path)
-            putExtra(ForegroundService.intent_type_id, ForegroundService.INTENT_ACTIVITY_DELETE)
-            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        })
+        if(Build.VERSION.SDK_INT>=Build.VERSION_CODES.R){
+            startIntentSenderForResult(MediaStore.createDeleteRequest(contentResolver, listOf(
+                uri
+            )).intentSender,11,null,0,0,0)
+            Log.d("MediaStoreActivity","DeleteIntent")
+        }
     }
-    override fun onCreate(savedInstanceState: Bundle?, persistentState: PersistableBundle?) {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        uri= ContentUris.withAppendedId(
+            MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+            intent.getLongExtra(ForegroundService.intent_path_id,0)
+        )
+        Log.d("MediaStoreActivity",uri.toString())
+        Log.d(classTag,intent.getIntExtra(ForegroundService.intent_type_id,ForegroundService.INTENT_DEFAULT).toString())
         if(Build.VERSION.SDK_INT>=Build.VERSION_CODES.R){ // Android 11+
-            val path=intent.getStringExtra(ForegroundService.intent_path_id)
 
-            Log.d("MediaStoreActivity",intent.getIntExtra(ForegroundService.intent_type_id,ForegroundService.INTENT_DEFAULT).toString())
             when(intent.getIntExtra(ForegroundService.intent_type_id,ForegroundService.INTENT_DEFAULT)){
-                ForegroundService.INTENT_ACTIVITY_DELETE->{
-                    startIntentSenderForResult(MediaStore.createDeleteRequest(contentResolver, listOf(
-                        Uri.parse(path)
-                    )).intentSender,11,null,0,0,0)
-                    Log.d("MediaStoreActivity","DeleteIntent")
+                INTENT_SHARE_DELETE->{
+                    shareImage()
+                    //deleteImage()
                 }
             }
         }
-        super.onCreate(savedInstanceState, persistentState)
+        finish()
+        super.onCreate(savedInstanceState)
     }
 }

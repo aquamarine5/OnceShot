@@ -27,8 +27,8 @@ class ForegroundService: Service() {
         const val notificationId="org.aqaurngd.onceshot.notification"
         const val channelId="org.aquarngd.onceshot.notification_channel"
         const val foregroundServiceChannelId="org.aquarngd.onceshot.foreground_channel"
-        const val intent_type_id="intent_extras_data.type"
-        const val intent_path_id="intent_extras_data.path"
+        const val intent_type_id="intent_extras_data_type"
+        const val intent_path_id="intent_extras_data_path"
         const val INTENT_DEFAULT=0
         const val INTENT_SHARE_DELETE=1
         const val INTENT_ACTIVITY_DELETE=11
@@ -54,7 +54,6 @@ class ForegroundService: Service() {
             isLive=true
             startFileObserver()
         }
-        if(intent!=null) parseIntentAction(intent)
         return super.onStartCommand(intent, flags, startId)
     }
     override fun onDestroy() {
@@ -62,27 +61,29 @@ class ForegroundService: Service() {
         isLive=false
         stopForeground(STOP_FOREGROUND_DETACH)
     }
+    @Deprecated("Use MediaStoreActivity")
     private fun shareImage(){
         Log.d(classTag,relativePath.toString())
         val chooserIntent=Intent.createChooser(Intent().apply {
             action = Intent.ACTION_SEND
             putExtra(Intent.EXTRA_STREAM,url)
-            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             type = "image/*"
         },getString(R.string.share_screenshot))
         chooserIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         applicationContext.startActivity(chooserIntent)
         Log.d(classTag,"ShareImage")
     }
+    @Deprecated("Use MediaStoreActivity")
     private fun deleteImage(){
         Log.d(classTag,"DeleteImage")
         application.startActivity(Intent().apply {
             setClass(applicationContext,MediaStoreActivity::class.java)
-            putExtra(intent_path_id,relativePath)
+            putExtra(intent_path_id,url.toString())
             putExtra(intent_type_id, INTENT_ACTIVITY_DELETE)
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         })
     }
+    @Deprecated("Use MediaStoreActivity")
     private fun parseIntentAction(intent:Intent){
         //relativePath=intent.getStringExtra("a")
         when(intent.getIntExtra(intent_type_id, INTENT_DEFAULT)){
@@ -102,13 +103,15 @@ class ForegroundService: Service() {
     }
     private fun startFileObserver(){
         screenShotListenManager.setListener {
-            sendNotification(it)
+
             relativePath=ContentUris.withAppendedId(
                 MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
                 it).encodedPath
             url=ContentUris.withAppendedId(
                 MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
                 it)
+            sendNotification(it)
+
         }
         screenShotListenManager.startListen()
     }
@@ -131,17 +134,20 @@ class ForegroundService: Service() {
             channel.description=getString(R.string.nof_screenshot_channel)
             manager.createNotificationChannel(channel)
         }
+        Log.d(classTag,"relativePath: $relativePath")
+        Log.d(classTag,"url: ${url.toString()}")
         val builder=NotificationCompat.Builder(this,notificationId).apply {
             setSmallIcon(R.drawable.onceshot_logo)
             setContentTitle("path")
             setStyle(NotificationCompat.BigPictureStyle(this).bigPicture(readImage(id)))
             setLargeIcon(readImage(id))
             priority = NotificationCompat.PRIORITY_HIGH
-            setContentIntent(PendingIntent.getService(applicationContext,0,Intent().apply {
-                    setClass(applicationContext,ForegroundService::class.java)
-                    putExtra(intent_type_id, INTENT_SHARE_DELETE)
-                    putExtra("a",relativePath)
-            },PendingIntent.FLAG_IMMUTABLE))
+            setContentIntent(PendingIntent.getActivity(applicationContext,0,Intent().apply {
+                    setClass(applicationContext,MediaStoreActivity::class.java)
+                    putExtra(intent_path_id,id)
+                    putExtra(intent_type_id, MediaStoreActivity.INTENT_SHARE_DELETE)
+
+            },PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT))
             setContentText("path")
             setWhen(System.currentTimeMillis())
         }

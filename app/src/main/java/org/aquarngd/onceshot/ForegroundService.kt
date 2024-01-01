@@ -17,6 +17,18 @@ import android.os.HandlerThread
 import android.os.IBinder
 import android.provider.MediaStore
 import android.util.Log
+import android.view.Gravity
+import android.view.LayoutInflater
+import android.view.WindowManager
+import androidx.activity.compose.setContent
+import androidx.compose.foundation.layout.Column
+import androidx.compose.material3.Button
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.res.stringResource
 import androidx.core.app.NotificationCompat
 import androidx.core.graphics.BitmapCompat
 
@@ -32,6 +44,7 @@ class ForegroundService: Service() {
         const val INTENT_DEFAULT=0
         const val INTENT_SHARE_DELETE=1
         const val INTENT_ACTIVITY_DELETE=11
+        const val INTENT_SHOW_FLOATINGWINDOW=2
     }
 
     var screenShotListenManager: ScreenShotListenManager =ScreenShotListenManager.newInstance(this)
@@ -49,6 +62,19 @@ class ForegroundService: Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+
+        if(intent!=null){
+
+            when(intent.getIntExtra(intent_type_id, INTENT_DEFAULT)){
+                INTENT_SHOW_FLOATINGWINDOW->{
+                    Log.d(classTag,"Received show floating window intent.")
+                    createFloatingWindow()
+                }
+                INTENT_DEFAULT->{
+
+                }
+            }
+        }
         if(intent!=null) Log.d(classTag,isLive.toString())
         if(!isLive){
             isLive=true
@@ -101,6 +127,40 @@ class ForegroundService: Service() {
         }
 
     }
+    @Composable
+    fun CreateFloatingWindowUI(){
+            Surface(contentColor = Color.White) {
+                Column{
+
+                    Text(text = "OnceShot")
+                    Button(onClick = { /*TODO*/ }) {
+                        Text(stringResource(R.string.btn_DeleteAfterShare))
+                    }
+                    Button(onClick={/*TODO*/}){
+                        Text("直接删除")
+                    }
+                }
+            }
+
+    }
+    fun createFloatingWindow(){
+        val windowManager=getSystemService(Context.WINDOW_SERVICE) as WindowManager
+        val windowParams= WindowManager.LayoutParams().apply {
+            gravity= Gravity.START or Gravity.TOP
+            x=20
+            y=100
+            type = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
+                WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
+            else
+                WindowManager.LayoutParams.TYPE_PHONE
+            width = WindowManager.LayoutParams.WRAP_CONTENT
+            height = WindowManager.LayoutParams.WRAP_CONTENT
+            flags=WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE and WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL
+        }
+        val inflater= LayoutInflater.from(applicationContext)
+        val contentView=LayoutInflater.from(this).inflate(R.layout.activity_floating_dialog,null)
+        windowManager.addView(contentView,windowParams)
+    }
     private fun startFileObserver(){
         screenShotListenManager.setListener {
 
@@ -110,6 +170,11 @@ class ForegroundService: Service() {
             url=ContentUris.withAppendedId(
                 MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
                 it)
+            startService(Intent().apply {
+                setClass(applicationContext,ForegroundService::class.java)
+                putExtra(intent_type_id, INTENT_SHOW_FLOATINGWINDOW)
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            })
             sendNotification(it)
 
         }

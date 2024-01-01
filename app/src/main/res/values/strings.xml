@@ -6,4 +6,5 @@
     <string name="nof_screenshot_channel">捕捉到的截图事件</string>
     <string name="nof_button_sharedelete">分享后刪除</string>
     <string name="share_screenshot">分享截图</string>
+    <string name="btn_DeleteAfterShare">复制后删除</string>
 </resources>

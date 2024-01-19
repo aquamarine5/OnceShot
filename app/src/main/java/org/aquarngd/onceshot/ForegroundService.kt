@@ -8,29 +8,16 @@ import android.content.ContentUris
 import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import android.graphics.ImageDecoder
 import android.net.Uri
 import android.os.Build
-import android.os.Handler
-import android.os.HandlerThread
 import android.os.IBinder
 import android.provider.MediaStore
 import android.util.Log
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.WindowManager
-import androidx.activity.compose.setContent
-import androidx.compose.foundation.layout.Column
-import androidx.compose.material3.Button
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.ComposeView
-import androidx.compose.ui.res.stringResource
 import androidx.core.app.NotificationCompat
-import androidx.core.graphics.BitmapCompat
 
 class ForegroundService: Service() {
     companion object{
@@ -87,62 +74,6 @@ class ForegroundService: Service() {
         isLive=false
         stopForeground(STOP_FOREGROUND_DETACH)
     }
-    @Deprecated("Use MediaStoreActivity")
-    private fun shareImage(){
-        Log.d(classTag,relativePath.toString())
-        val chooserIntent=Intent.createChooser(Intent().apply {
-            action = Intent.ACTION_SEND
-            putExtra(Intent.EXTRA_STREAM,url)
-            type = "image/*"
-        },getString(R.string.share_screenshot))
-        chooserIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        applicationContext.startActivity(chooserIntent)
-        Log.d(classTag,"ShareImage")
-    }
-    @Deprecated("Use MediaStoreActivity")
-    private fun deleteImage(){
-        Log.d(classTag,"DeleteImage")
-        application.startActivity(Intent().apply {
-            setClass(applicationContext,MediaStoreActivity::class.java)
-            putExtra(intent_path_id,url.toString())
-            putExtra(intent_type_id, INTENT_ACTIVITY_DELETE)
-            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        })
-    }
-    @Deprecated("Use MediaStoreActivity")
-    private fun parseIntentAction(intent:Intent){
-        //relativePath=intent.getStringExtra("a")
-        when(intent.getIntExtra(intent_type_id, INTENT_DEFAULT)){
-            INTENT_SHARE_DELETE->{
-                if(relativePath==null){
-                    Log.w(classTag,"relativePath is null")
-                }else{
-                    shareImage()
-                    deleteImage()
-                }
-            }
-            INTENT_DEFAULT->{
-
-            }
-        }
-
-    }
-    @Composable
-    fun CreateFloatingWindowUI(){
-            Surface(contentColor = Color.White) {
-                Column{
-
-                    Text(text = "OnceShot")
-                    Button(onClick = { /*TODO*/ }) {
-                        Text(stringResource(R.string.btn_DeleteAfterShare))
-                    }
-                    Button(onClick={/*TODO*/}){
-                        Text("直接删除")
-                    }
-                }
-            }
-
-    }
     fun createFloatingWindow(){
         val windowManager=getSystemService(Context.WINDOW_SERVICE) as WindowManager
         val windowParams= WindowManager.LayoutParams().apply {
@@ -155,7 +86,8 @@ class ForegroundService: Service() {
                 WindowManager.LayoutParams.TYPE_PHONE
             width = WindowManager.LayoutParams.WRAP_CONTENT
             height = WindowManager.LayoutParams.WRAP_CONTENT
-            flags=WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE and WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL
+            flags= (WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL
+                    or WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE);
         }
         val inflater= LayoutInflater.from(applicationContext)
         val contentView=LayoutInflater.from(this).inflate(R.layout.activity_floating_dialog,null)

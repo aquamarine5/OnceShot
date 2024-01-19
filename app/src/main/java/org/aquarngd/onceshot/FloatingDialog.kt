@@ -17,20 +17,4 @@ class FloatingDialog : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_floating_dialog)
     }
-    @Composable
-    fun CreateFloatingWindowUI(){
-        Surface(contentColor = Color.White) {
-            Column{
-
-                Text(text = "OnceShot")
-                Button(onClick = { /*TODO*/ }) {
-                    Text(stringResource(R.string.btn_DeleteAfterShare))
-                }
-                Button(onClick={/*TODO*/}){
-                    Text("直接删除")
-                }
-            }
-        }
-
-    }
 }

@@ -1,20 +1,32 @@
 package org.aquarngd.onceshot
 
+import android.content.Context
+import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import androidx.activity.compose.setContent
-import androidx.compose.foundation.layout.Column
-import androidx.compose.material3.Button
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.ComposeView
-import androidx.compose.ui.res.stringResource
+import android.util.Log
+import android.view.WindowManager
+import com.google.android.material.button.MaterialButton
 
 class FloatingDialog : AppCompatActivity() {
+    private var btnDeleteDirectly:MaterialButton?=null
+    private var btnDeleteShare:MaterialButton?=null
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_floating_dialog)
+        btnDeleteDirectly=findViewById(R.id.btn_delete_directly)
+        btnDeleteShare=findViewById(R.id.btn_delete_after_share)
+        btnDeleteDirectly?.setOnClickListener {
+            sendForegroundServiceIntent(ForegroundService.INTENT_DELETE_DIRECTLY)
+        }
+        btnDeleteShare?.setOnClickListener {
+            sendForegroundServiceIntent(ForegroundService.INTENT_SHARE_DELETE)
+        }
+    }
+    fun sendForegroundServiceIntent(intentType:Int){
+        startActivity(Intent().apply {
+            setClass(applicationContext,ForegroundService::class.java)
+            putExtra(ForegroundService.intent_type_id,intentType)
+        })
     }
 }

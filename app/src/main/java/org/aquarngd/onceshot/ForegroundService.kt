@@ -11,11 +11,14 @@ import android.graphics.Bitmap
 import android.graphics.ImageDecoder
 import android.net.Uri
 import android.os.Build
+import android.os.Handler
 import android.os.IBinder
+import android.os.Looper
 import android.provider.MediaStore
 import android.util.Log
 import android.view.Gravity
 import android.view.LayoutInflater
+import android.view.View
 import android.view.WindowManager
 import androidx.core.app.NotificationCompat
 
@@ -30,14 +33,16 @@ class ForegroundService: Service() {
         const val intent_path_id="intent_extras_data_path"
         const val INTENT_DEFAULT=0
         const val INTENT_SHARE_DELETE=1
-        const val INTENT_ACTIVITY_DELETE=11
+        const val INTENT_DELETE_DIRECTLY=11
         const val INTENT_SHOW_FLOATINGWINDOW=2
+        const val INTENT_CLOSE_FLOATINGWINDOW=3
     }
 
     var screenShotListenManager: ScreenShotListenManager =ScreenShotListenManager.newInstance(this)
     var isLive=false
     var relativePath:String?=null
-    var url:Uri?=null
+    var uri:Uri?=null
+    var contentView: View?=null
 
     override fun onBind(intent: Intent?): IBinder? {
         return null
@@ -50,16 +55,33 @@ class ForegroundService: Service() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
 
-        if(intent!=null){
+        if(intent!=null) when(intent.getIntExtra(intent_type_id, INTENT_DEFAULT)){
+            INTENT_SHOW_FLOATINGWINDOW->{
+                Log.d(classTag,"Received show floating window intent.")
+                createFloatingWindow()
+            }
+            INTENT_DEFAULT->{
 
-            when(intent.getIntExtra(intent_type_id, INTENT_DEFAULT)){
-                INTENT_SHOW_FLOATINGWINDOW->{
-                    Log.d(classTag,"Received show floating window intent.")
-                    createFloatingWindow()
-                }
-                INTENT_DEFAULT->{
-
-                }
+            }
+            INTENT_DELETE_DIRECTLY->{
+                deleteImage()
+                closeFloatingWindow()
+            }
+            INTENT_SHARE_DELETE->{
+                val chooserIntent=Intent.createChooser(Intent().apply {
+                    action = Intent.ACTION_SEND
+                    putExtra(Intent.EXTRA_STREAM,uri)
+                    type = "image/*"
+                },getString(R.string.share_screenshot))
+                startActivity(chooserIntent)
+                Log.d(classTag,"ShareImage")
+                Handler().postDelayed({
+                    deleteImage()
+                }, 10000)
+                closeFloatingWindow()
+            }
+            INTENT_CLOSE_FLOATINGWINDOW->{
+                closeFloatingWindow()
             }
         }
         if(intent!=null) Log.d(classTag,isLive.toString())
@@ -69,12 +91,32 @@ class ForegroundService: Service() {
         }
         return super.onStartCommand(intent, flags, startId)
     }
+    private fun closeFloatingWindow(){
+
+        if(contentView!=null){
+            val windowManager=getSystemService(Context.WINDOW_SERVICE) as WindowManager
+            windowManager.removeView(contentView)
+            contentView=null
+        }
+    }
     override fun onDestroy() {
         super.onDestroy()
         isLive=false
         stopForeground(STOP_FOREGROUND_DETACH)
     }
-    fun createFloatingWindow(){
+    private fun deleteImage(){
+        if(uri==null) {
+            Log.e(classTag,"Delete image: Uri is null!")
+            return;
+        }
+        if(Build.VERSION.SDK_INT>=Build.VERSION_CODES.R){
+            startIntentSender(MediaStore.createDeleteRequest(contentResolver, listOf(
+                uri
+            )).intentSender,null,0,0,0)
+            Log.d(classTag,"Delete image: call MediaStore.createDeleteRequest successfully.")
+        }
+    }
+    private fun createFloatingWindow(){
         val windowManager=getSystemService(Context.WINDOW_SERVICE) as WindowManager
         val windowParams= WindowManager.LayoutParams().apply {
             gravity= Gravity.START or Gravity.TOP
@@ -87,10 +129,9 @@ class ForegroundService: Service() {
             width = WindowManager.LayoutParams.WRAP_CONTENT
             height = WindowManager.LayoutParams.WRAP_CONTENT
             flags= (WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL
-                    or WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE);
+                    or WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE)
         }
-        val inflater= LayoutInflater.from(applicationContext)
-        val contentView=LayoutInflater.from(this).inflate(R.layout.activity_floating_dialog,null)
+        contentView=LayoutInflater.from(this).inflate(R.layout.activity_floating_dialog,null)
         windowManager.addView(contentView,windowParams)
     }
     private fun startFileObserver(){
@@ -99,7 +140,7 @@ class ForegroundService: Service() {
             relativePath=ContentUris.withAppendedId(
                 MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
                 it).encodedPath
-            url=ContentUris.withAppendedId(
+            uri=ContentUris.withAppendedId(
                 MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
                 it)
             startService(Intent().apply {
@@ -132,7 +173,7 @@ class ForegroundService: Service() {
             manager.createNotificationChannel(channel)
         }
         Log.d(classTag,"relativePath: $relativePath")
-        Log.d(classTag,"url: ${url.toString()}")
+        Log.d(classTag,"url: ${uri.toString()}")
         val builder=NotificationCompat.Builder(this,notificationId).apply {
             setSmallIcon(R.drawable.onceshot_logo)
             setContentTitle("path")

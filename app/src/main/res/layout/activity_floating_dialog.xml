@@ -10,19 +10,29 @@
     <com.google.android.material.textview.MaterialTextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="@string/FloatingDialog_OnceShot" />
+        android:text="@string/FloatingDialog_OnceShot"
+        android:textAlignment="center" />
+
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btn_delete_after_share"
+        style="@style/Widget.Material3.Button.OutlinedButton"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:text="@string/FloatingDialog_DeleteAfterShare" />
+        android:text="@string/FloatingDialog_DeleteAfterShare"
+        android:textColor="#000000"
+        app:strokeColor="@color/teal_700"
+        android:textSize="14sp" />
 
     
     <com.google.android.material.button.MaterialButton
-        android:id="@+id/btn_delete"
+        style="@style/Widget.Material3.Button.OutlinedButton"
+        android:id="@+id/btn_delete_directly"
         android:layout_width="match_parent"
         android:layout_height="0dp"
+        app:strokeColor="@color/teal_700"
         android:layout_weight="1"
+        android:textColor="#000000"
+        android:textSize="14sp"
         android:text="@string/FloatingDialog_Delete" />
 </LinearLayout>

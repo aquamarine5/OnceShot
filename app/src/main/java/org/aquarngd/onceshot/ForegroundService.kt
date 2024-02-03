@@ -180,12 +180,6 @@ class ForegroundService: Service() {
             setStyle(NotificationCompat.BigPictureStyle(this).bigPicture(readImage(id)))
             setLargeIcon(readImage(id))
             priority = NotificationCompat.PRIORITY_HIGH
-            setContentIntent(PendingIntent.getActivity(applicationContext,0,Intent().apply {
-                    setClass(applicationContext,MediaStoreActivity::class.java)
-                    putExtra(intent_path_id,id)
-                    putExtra(intent_type_id, MediaStoreActivity.INTENT_SHARE_DELETE)
-
-            },PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT))
             setContentText("path")
             setWhen(System.currentTimeMillis())
         }

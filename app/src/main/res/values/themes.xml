@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <style name="Theme.OnceShot" parent="Theme.MaterialComponents.Light.NoActionBar" >
+    <style name="Theme.OnceShot" parent="Theme.MaterialComponents.Light.NoActionBar.Bridge" >
         <item name="colorPrimary">#FF03DAC5</item>
         <item name="colorPrimaryDark">#FF018786</item>
         <item name="colorAccent">#ff0000</item>

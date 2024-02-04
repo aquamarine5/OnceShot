@@ -49,5 +49,10 @@
             android:exported="true"
             android:label="ForegroundService" />
     </application>
-
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.SEND"/>
+            <data android:mimeType="image/*"/>
+        </intent>
+    </queries>
 </manifest>

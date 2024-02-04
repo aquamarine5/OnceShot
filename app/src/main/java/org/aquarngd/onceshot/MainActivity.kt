@@ -182,12 +182,11 @@ class MainActivity : ComponentActivity() {
                             if (!MediaStore.canManageMedia(applicationContext)) {
                                 CreateCardButton(
                                     onClick = {
-                                        startActivity(
-                                            Intent(
-                                                Settings.ACTION_REQUEST_MANAGE_MEDIA,
-                                                Uri.parse("package: ${applicationContext.packageName}")
-                                            )
-                                        )
+                                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                                            startActivity(Intent(Settings.ACTION_REQUEST_MANAGE_MEDIA).apply {
+                                                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                            })
+                                        }
                                     },
                                     icon = painterResource(id = R.drawable.icon_mediastore_access),
                                     title = "需要媒体库管理权限",

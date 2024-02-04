@@ -21,6 +21,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.WindowManager
 import androidx.core.app.NotificationCompat
+import com.google.android.material.button.MaterialButton
 
 class ForegroundService: Service() {
     companion object{
@@ -54,7 +55,7 @@ class ForegroundService: Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-
+        Log.i(classTag,"Received intent: "+intent?.getIntExtra(intent_type_id, INTENT_DEFAULT))
         if(intent!=null) when(intent.getIntExtra(intent_type_id, INTENT_DEFAULT)){
             INTENT_SHOW_FLOATINGWINDOW->{
                 Log.d(classTag,"Received show floating window intent.")
@@ -133,6 +134,39 @@ class ForegroundService: Service() {
         }
         contentView=LayoutInflater.from(this).inflate(R.layout.activity_floating_dialog,null)
         windowManager.addView(contentView,windowParams)
+        contentView!!.apply {
+            val btnDeleteDirectly=findViewById<MaterialButton>(R.id.btn_delete_directly)
+            val btnDeleteShare=findViewById<MaterialButton>(R.id.btn_delete_after_share)
+            btnDeleteDirectly?.setOnClickListener {
+                Log.d(FloatingDialog.classTag,"Call ForegroundService INTENT_DELETE_DIRECTLY")
+                deleteImage()
+                closeFloatingWindow()
+                //sendForegroundServiceIntent(INTENT_DELETE_DIRECTLY)
+            }
+            btnDeleteShare?.setOnClickListener {
+                Log.d(FloatingDialog.classTag,"Call ForegroundService INTENT_SHARE_DELETE")
+                val chooserIntent=Intent.createChooser(Intent().apply {
+                    action = Intent.ACTION_SEND
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    putExtra(Intent.EXTRA_STREAM,uri)
+                    type = "image/*"
+                },getString(R.string.share_screenshot))
+                startActivity(chooserIntent)
+                Log.d(classTag,"ShareImage")
+                Handler().postDelayed({
+                    deleteImage()
+                }, 10000)
+                closeFloatingWindow()
+                //sendForegroundServiceIntent(INTENT_SHARE_DELETE)
+            }
+        }
+        Log.d(classTag,"Create FloatingDialog successfully.")
+    }
+    private fun sendForegroundServiceIntent(intentType:Int){
+        startActivity(Intent().apply {
+            setClass(applicationContext,ForegroundService::class.java)
+            putExtra(intent_type_id,intentType)
+        })
     }
     private fun startFileObserver(){
         screenShotListenManager.setListener {

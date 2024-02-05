@@ -19,13 +19,19 @@ import android.os.Looper
 import android.provider.MediaStore
 import android.transition.Visibility
 import android.util.Log
+import android.view.ContextThemeWrapper
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
+import android.view.ViewGroup
 import android.view.WindowManager
 import android.widget.LinearLayout
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.sp
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat.getSystemService
+import androidx.core.content.withStyledAttributes
 import com.google.android.material.button.MaterialButton
 
 class ForegroundService : Service() {
@@ -145,34 +151,66 @@ class ForegroundService : Service() {
             }, PackageManager.COMPONENT_ENABLED_STATE_DEFAULT
         )
     }
-    private fun renderShareableApplicationsLayout(view:View,infos:List<ResolveInfo>){
+
+    private fun renderShareableApplicationsLayout(view: View, infos: List<ResolveInfo>) {
         view.apply {
             removeFloatingWindowButtons(this)
-            val shareableLayout=findViewById<LinearLayout>(R.id.share_layout)
-            shareableLayout.visibility=View.VISIBLE
-            infos.forEach { info ->
-                val button=MaterialButton(applicationContext).apply {
-                    icon=info.loadIcon(applicationContext.packageManager)
-                    text=info.loadLabel(applicationContext.packageManager)
+            val shareableLayout = findViewById<LinearLayout>(R.id.share_layout)
+            shareableLayout.visibility = View.VISIBLE
+            for (i in 0 until 20) {
+                val info = infos[i]
+                Log.d(
+                    classTag,
+                    "${info.activityInfo.name} ${info.loadLabel(shareableLayout.context.packageManager)}"
+                )
+                val button = MaterialButton(
+                    ContextThemeWrapper(
+                        shareableLayout.context,
+                        com.google.android.material.R.style.Widget_Material3_Button_OutlinedButton_Icon
+                    ), null,
+                    com.google.android.material.R.attr.materialIconButtonOutlinedStyle
+                ).apply {
+                    icon = info.loadIcon(shareableLayout.context.packageManager)
+                    text = info.loadLabel(shareableLayout.context.packageManager)
+                    setStrokeColorResource(R.color.teal_700)
+                    textSize = 14F
+                    setTextColor(0)
+                    layoutParams = ViewGroup.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT,
+                        ViewGroup.LayoutParams.MATCH_PARENT
+                    )
                 }
                 button.setOnClickListener {
-                    startActivity(Intent(Intent.ACTION_SEND).apply {
-                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                        putExtra(Intent.EXTRA_STREAM, uri)
-                        setPackage(info.resolvePackageName)
-                        type = "image/*"
-                    })
+                    onClickShareDeleteButton()
                 }
                 shareableLayout.addView(button)
             }
         }
     }
-    private fun removeFloatingWindowButtons(view:View){
+    private fun shareImage(){
+        startActivity(
+            Intent.createChooser(Intent(Intent.ACTION_SEND).apply {
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                putExtra(Intent.EXTRA_STREAM, uri)
+                type = "image/*"
+            }, "j").apply {
+
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            })
+    }
+    private fun onClickShareDeleteButton(){
+        shareImage()
+        closeFloatingWindow()
+        Handler().postDelayed({
+            deleteImage()
+        }, 10000)
+    }
+    private fun removeFloatingWindowButtons(view: View) {
         view.apply {
             val btnDeleteDirectly = findViewById<MaterialButton>(R.id.btn_delete_directly)
             val btnDeleteShare = findViewById<MaterialButton>(R.id.btn_delete_after_share)
-            btnDeleteDirectly.visibility=View.GONE
-            btnDeleteShare.visibility=View.GONE
+            btnDeleteDirectly.visibility = View.GONE
+            btnDeleteShare.visibility = View.GONE
         }
     }
 
@@ -203,7 +241,9 @@ class ForegroundService : Service() {
             }
             btnDeleteShare?.setOnClickListener {
                 Log.d(FloatingDialog.classTag, "Call ForegroundService INTENT_SHARE_DELETE")
-                renderShareableApplicationsLayout(contentView!!,getAllShareableApplications())
+                shareImage()
+                closeFloatingWindow()
+                //renderShareableApplicationsLayout(contentView!!, getAllShareableApplications())
             }
         }
         Log.d(classTag, "Create FloatingDialog successfully.")

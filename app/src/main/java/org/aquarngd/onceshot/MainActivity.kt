@@ -1,7 +1,6 @@
 package org.aquarngd.onceshot
 
 import android.Manifest
-import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
@@ -9,10 +8,6 @@ import android.os.Build
 import android.os.Bundle
 import android.provider.MediaStore
 import android.provider.Settings
-import android.util.Log
-import android.view.Gravity
-import android.view.LayoutInflater
-import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Arrangement
@@ -20,10 +15,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -48,7 +40,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import org.aquarngd.onceshot.ui.theme.OnceShotTheme
 import org.aquarngd.stackbricks.StackbricksCompose
-import org.aquarngd.stackbricks.WeiboCmtsMsgPvder
+import org.aquarngd.stackbricks.WeiboCommentsMsgPvder
 
 class MainActivity : ComponentActivity() {
 
@@ -94,9 +86,9 @@ class MainActivity : ComponentActivity() {
                     )
                     StackbricksCompose(
                         rememberCoroutineScope(),
-                        LocalContext.current, WeiboCmtsMsgPvder.MsgPvderID, "4936409558027888"
+                        LocalContext.current, WeiboCommentsMsgPvder.MsgPvderID, "4936409558027888"
                     )
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
                         CreateCardButton(
                             onClick = { },
                             icon = painterResource(id = R.drawable.icon_android),
@@ -221,7 +213,7 @@ class MainActivity : ComponentActivity() {
                     painter = icon,
                     contentDescription = "",
                     modifier = iconModifier,
-                    tint=Color.Unspecified
+                    tint = Color.Unspecified
                 )
                 Column(
                     horizontalAlignment = Alignment.Start,
@@ -269,7 +261,9 @@ fun GreetingPreview() {
                         )
                         StackbricksCompose(
                             rememberCoroutineScope(),
-                            LocalContext.current, WeiboCmtsMsgPvder.MsgPvderID, "4936409558027888"
+                            LocalContext.current,
+                            WeiboCommentsMsgPvder.MsgPvderID,
+                            "4936409558027888"
                         )
                         CreateCardButton(
                             onClick = { },

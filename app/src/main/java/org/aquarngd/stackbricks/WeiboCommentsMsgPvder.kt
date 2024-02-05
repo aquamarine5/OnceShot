@@ -6,11 +6,9 @@ import android.util.Log
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.Request
-import org.aquarngd.stackbricks.IMsgPvder
-import org.aquarngd.stackbricks.UpdateMessage
 import org.json.JSONObject
 
-class WeiboCmtsMsgPvder() : IMsgPvder {
+class WeiboCommentsMsgPvder() : IMsgPvder {
     override val ID: String
         get() = MsgPvderID
 
@@ -28,7 +26,7 @@ class WeiboCmtsMsgPvder() : IMsgPvder {
             StackbricksService.okHttpClient.newCall(request).execute().apply {
                 if (isSuccessful) {
                     val json = JSONObject(body!!.string())
-                    Log.d(WeiboCmtsMsgPvder::class.simpleName, json.toString())
+                    Log.d(WeiboCommentsMsgPvder::class.simpleName, json.toString())
                     data = json.getJSONArray("data").getJSONObject(0).getString("text").split(";;")
                 } else throw NetworkErrorException("a")
             }

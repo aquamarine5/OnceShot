@@ -1,9 +1,6 @@
 package org.aquarngd.stackbricks
 
 import android.content.Context
-import org.aquarngd.stackbricks.IPkgPvder
-import org.aquarngd.stackbricks.StackbricksService
-import org.aquarngd.stackbricks.UpdatePackage
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.Request
@@ -23,11 +20,13 @@ class GhproxyPkgPvder : IPkgPvder {
         updateMessage: UpdateMessage,
         pkgPvderData: String
     ): UpdatePackage {
-        val apkFile: File = File.createTempFile(
-            "stackbricks_apk_${updateMessage.version}",
-            ".apk",
-            context.cacheDir
-        )
+        val apkFile: File = withContext(Dispatchers.IO) {
+            File.createTempFile(
+                "stackbricks_apk_${updateMessage.version}",
+                ".apk",
+                context.cacheDir
+            )
+        }
 
         val data = pkgPvderData.split("]]")
         val url =

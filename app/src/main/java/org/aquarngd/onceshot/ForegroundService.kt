@@ -120,8 +120,8 @@ class ForegroundService : Service() {
             Log.e(classTag, "Delete image: Uri is null!")
             return
         }
-        val result=contentResolver.delete(uri!!,null,null);
-        Log.d(classTag, "Delete image result:${{ result==1 }}")
+        val result = contentResolver.delete(uri!!, null, null);
+        Log.d(classTag, "Delete image result:${{ result == 1 }}")
     }
 
     private fun getAllShareableApplications(): List<ResolveInfo> {
@@ -171,7 +171,8 @@ class ForegroundService : Service() {
             }
         }
     }
-    private fun shareImage(){
+
+    private fun shareImage() {
         startActivity(
             Intent.createChooser(Intent(Intent.ACTION_SEND).apply {
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
@@ -182,13 +183,15 @@ class ForegroundService : Service() {
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             })
     }
-    private fun onClickShareDeleteButton(){
+
+    private fun onClickShareDeleteButton() {
         shareImage()
         closeFloatingWindow()
         Handler().postDelayed({
             deleteImage()
         }, 10000)
     }
+
     private fun removeFloatingWindowButtons(view: View) {
         view.apply {
             val btnDeleteDirectly = findViewById<MaterialButton>(R.id.btn_delete_directly)

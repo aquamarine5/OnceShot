@@ -20,7 +20,10 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -29,16 +32,20 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import org.aquarngd.onceshot.ui.theme.OnceShotTheme
+import org.aquarngd.stackbricks.StackbricksCompose
+import org.aquarngd.stackbricks.WeiboCmtsMsgPvder
 
 class MainActivity : ComponentActivity() {
 
@@ -95,44 +102,6 @@ class MainActivity : ComponentActivity() {
         }
 
     }
-
-    @Composable
-    fun CreateFloatingWindowUI() {
-        Surface(contentColor = Color.White) {
-            Column {
-
-                Text(text = "OnceShot")
-                Button(onClick = { /*TODO*/ }) {
-                    Text(stringResource(R.string.btn_DeleteAfterShare))
-                }
-                Button(onClick = {/*TODO*/ }) {
-                    Text("直接删除")
-                }
-            }
-        }
-
-    }
-
-    fun createFloatingWindow() {
-        val windowManager = getSystemService(Context.WINDOW_SERVICE) as WindowManager
-        val windowParams = WindowManager.LayoutParams().apply {
-            gravity = Gravity.START or Gravity.TOP
-            x = 20
-            y = 100
-            type = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
-                WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
-            else
-                WindowManager.LayoutParams.TYPE_PHONE
-            width = WindowManager.LayoutParams.WRAP_CONTENT
-            height = WindowManager.LayoutParams.WRAP_CONTENT
-            flags =
-                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL
-        }
-        val inflater = LayoutInflater.from(applicationContext)
-        val contentView = LayoutInflater.from(this).inflate(R.layout.activity_floating_dialog, null)
-        windowManager.addView(contentView, windowParams)
-    }
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Intent(this, ForegroundService::class.java).apply {
@@ -143,66 +112,85 @@ class MainActivity : ComponentActivity() {
             }
         }
         setContent {
-            OnceShotTheme {
-                // A surface container using the 'background' color from the theme
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background
-                ) {
-                    Column {
-                        if (!Settings.canDrawOverlays(this@MainActivity)) {
+            drawMainContent()
+        }
+    }
+    @Composable
+    fun drawMainContent(){
+        OnceShotTheme {
+            // A surface container using the 'background' color from the theme
+            Surface(
+                modifier = Modifier.fillMaxSize(),
+                color = MaterialTheme.colorScheme.background
+            ) {
+                Column {
+                    CreateCardButton(
+                        onClick = { /*TODO*/ },
+                        icon = painterResource(id = R.drawable.icon_service_start),
+                        title = "OnceShot 服务已经启动",
+                        text = "点击停止",
+                        color = Color(getColor(R.color.teal_200))
+                    )
+                    StackbricksCompose(
+                        rememberCoroutineScope(),
+                        LocalContext.current, WeiboCmtsMsgPvder.MsgPvderID, "4936409558027888")
+                    if (!Settings.canDrawOverlays(this@MainActivity)) {
+                        CreateCardButton(
+                            onClick = {
+                                requestOverlayDisplayPermission()
+                            },
+                            icon = painterResource(id = R.drawable.icon_floating_window),
+                            title = "需要悬浮窗权限",
+                            text = "OnceShot 需要添加悬浮窗让用户在截图后进行进一步操作",
+                            color = Color.Red
+                        )
+                    }
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                        if (applicationContext.checkSelfPermission(Manifest.permission.READ_MEDIA_IMAGES) != PackageManager.PERMISSION_GRANTED) {
                             CreateCardButton(
                                 onClick = {
-                                    requestOverlayDisplayPermission()
+                                    requestPermissions(
+                                        arrayOf(Manifest.permission.READ_MEDIA_IMAGES),
+                                        REQUEST_PERMISSION_IMAGE
+                                    )
                                 },
-                                icon = painterResource(id = R.drawable.icon_floating_window),
-                                title = "需要悬浮窗权限",
-                                text = "OnceShot 需要添加悬浮窗让用户在截图后进行进一步操作",
+                                icon = painterResource(id = R.drawable.icon_read_image),
+                                title = "需要读取设备内图片权限",
+                                text = "OnceShot 需要通过读取设备图片来监听截图操作来显示操作面板",
+                                color = Color.Red
+                            )
+
+                        }
+                    }
+                    if (Build.VERSION.SDK_INT > Build.VERSION_CODES.R) {
+                        if (!MediaStore.canManageMedia(applicationContext)) {
+                            CreateCardButton(
+                                onClick = {
+                                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                                        startActivity(Intent(Settings.ACTION_REQUEST_MANAGE_MEDIA).apply {
+                                            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                        })
+                                    }
+                                },
+                                icon = painterResource(id = R.drawable.icon_mediastore_access),
+                                title = "需要媒体库管理权限",
+                                text = "OnceShot 通过对媒体库(MediaStore)的控制权限来删除无用截图",
                                 color = Color.Red
                             )
                         }
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                            if (applicationContext.checkSelfPermission(Manifest.permission.READ_MEDIA_IMAGES) != PackageManager.PERMISSION_GRANTED) {
-                                CreateCardButton(
-                                    onClick = {
-                                        requestPermissions(
-                                            arrayOf(Manifest.permission.READ_MEDIA_IMAGES),
-                                            REQUEST_PERMISSION_IMAGE
-                                        )
-                                    },
-                                    icon = painterResource(id = R.drawable.icon_read_image),
-                                    title = "需要读取设备内图片权限",
-                                    text = "OnceShot 需要通过读取设备图片来监听截图操作来显示操作面板",
-                                    color = Color.Red
-                                )
-
-                            }
-                        }
-                        if (Build.VERSION.SDK_INT > Build.VERSION_CODES.R) {
-                            if (!MediaStore.canManageMedia(applicationContext)) {
-                                CreateCardButton(
-                                    onClick = {
-                                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                                            startActivity(Intent(Settings.ACTION_REQUEST_MANAGE_MEDIA).apply {
-                                                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                                            })
-                                        }
-                                    },
-                                    icon = painterResource(id = R.drawable.icon_mediastore_access),
-                                    title = "需要媒体库管理权限",
-                                    text = "OnceShot 通过对媒体库(MediaStore)的控制权限来删除无用截图",
-                                    color = Color.Red
-                                )
-                            }
-                        }
                     }
+
+                    CreateCardButton(
+                        onClick = { /*TODO*/ },
+                        icon = painterResource(id = R.drawable.stackbricks_logo),
+                        title = "OnceShot 由 Renegade Creation 开发",
+                        text = "作者：@aquamarine5 (@海蓝色的咕咕鸽)",
+                        color = Color.Blue
+                    )
                 }
             }
         }
-        checkPermission()
-        //createFloatingWindow()
     }
-
     @Composable
     fun CreateCardButton(
         onClick: () -> Unit,
@@ -217,7 +205,6 @@ class MainActivity : ComponentActivity() {
             colors = ButtonDefaults.buttonColors(color),
             modifier = Modifier
                 .fillMaxWidth()
-
                 .padding(10.dp)
         ) {
             Row(
@@ -227,10 +214,13 @@ class MainActivity : ComponentActivity() {
                     .padding(7.dp)
                     .fillMaxWidth()
             ) {
-
+                val iconModifier=Modifier
+                    .padding(10.dp, 0.dp, 20.dp, 0.dp)
+                    //.size(35.dp)
                 Icon(
-                    painter = icon, contentDescription = "checkOverlayPermission",
-                    modifier = Modifier.padding(10.dp, 0.dp, 20.dp, 0.dp)
+                    painter = icon,
+                    contentDescription = "",
+                    modifier = iconModifier
                 )
                 Column(
                     horizontalAlignment = Alignment.Start,
@@ -266,10 +256,18 @@ fun GreetingPreview() {
                 Column {
 
                     a.CreateCardButton(
+                        onClick = { /*TODO*/ },
+                        icon = painterResource(id = R.drawable.onceshot_logo),
+                        title = "",
+                        text = "",
+                        color = Color.Blue
+                    )
+                    a.CreateCardButton(
                         onClick = { a.requestOverlayDisplayPermission() },
                         icon = painterResource(id = R.drawable.icon_floating_window),
                         title = "需要悬浮窗权限",
-                        text = "悬浮窗",
+                        text = "OnceShot 需要添加悬浮窗让用户在截图后进行进一步操作",
+
                         color = Color.Red
                     )
 
@@ -290,6 +288,14 @@ fun GreetingPreview() {
                     title = "需要读取设备内图片权限",
                     text = "OnceShot 需要通过读取设备图片来监听截图操作来显示操作面板",
                     color = Color.Red
+                    )
+
+                    a.CreateCardButton(
+                            onClick = { /*TODO*/ },
+                    icon = painterResource(id = R.drawable.stackbricks_logo),
+                    title = "",
+                    text = "",
+                    color = Color.Blue
                     )
                 }
             }

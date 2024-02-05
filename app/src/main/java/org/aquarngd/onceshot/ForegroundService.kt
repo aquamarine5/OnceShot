@@ -241,8 +241,7 @@ class ForegroundService : Service() {
             }
             btnDeleteShare?.setOnClickListener {
                 Log.d(FloatingDialog.classTag, "Call ForegroundService INTENT_SHARE_DELETE")
-                shareImage()
-                closeFloatingWindow()
+                onClickShareDeleteButton()
                 //renderShareableApplicationsLayout(contentView!!, getAllShareableApplications())
             }
         }

@@ -2,7 +2,6 @@ package org.aquarngd.onceshot
 
 import android.app.NotificationChannel
 import android.app.NotificationManager
-import android.app.PendingIntent
 import android.app.Service
 import android.content.ContentUris
 import android.content.Context
@@ -15,9 +14,7 @@ import android.net.Uri
 import android.os.Build
 import android.os.Handler
 import android.os.IBinder
-import android.os.Looper
 import android.provider.MediaStore
-import android.transition.Visibility
 import android.util.Log
 import android.view.ContextThemeWrapper
 import android.view.Gravity
@@ -26,12 +23,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.WindowManager
 import android.widget.LinearLayout
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.unit.sp
 import androidx.core.app.NotificationCompat
-import androidx.core.content.ContextCompat.getSystemService
-import androidx.core.content.withStyledAttributes
 import com.google.android.material.button.MaterialButton
 
 class ForegroundService : Service() {
@@ -128,16 +120,8 @@ class ForegroundService : Service() {
             Log.e(classTag, "Delete image: Uri is null!")
             return
         }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            startIntentSender(
-                MediaStore.createDeleteRequest(
-                    contentResolver, listOf(
-                        uri
-                    )
-                ).intentSender, null, 0, 0, 0
-            )
-            Log.d(classTag, "Delete image: call MediaStore.createDeleteRequest successfully.")
-        }
+        val result=contentResolver.delete(uri!!,null,null);
+        Log.d(classTag, "Delete image result:${{ result==1 }}")
     }
 
     private fun getAllShareableApplications(): List<ResolveInfo> {

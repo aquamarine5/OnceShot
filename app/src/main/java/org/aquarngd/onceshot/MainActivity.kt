@@ -32,7 +32,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -55,53 +58,6 @@ class MainActivity : ComponentActivity() {
         const val TAG = "MainActivity"
     }
 
-    private fun checkPermission() {
-
-        if (Build.VERSION.SDK_INT > Build.VERSION_CODES.R) {
-
-            Log.d(TAG, "checkPermission: Check manage media permission")
-            if (!MediaStore.canManageMedia(applicationContext)) {
-                Log.d(TAG, "checkPermission: Request manage media permission")
-                startActivity(
-                    Intent(
-                        Settings.ACTION_REQUEST_MANAGE_MEDIA,
-                        Uri.parse("package: ${applicationContext.packageName}")
-                    )
-                )
-            }
-
-        }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-
-            if (applicationContext.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)
-                != PackageManager.PERMISSION_GRANTED
-            ) {
-                requestPermissions(
-                    arrayOf(Manifest.permission.POST_NOTIFICATIONS),
-                    REQUEST_PERMISSION_NOF
-                )
-            }
-            if (applicationContext.checkSelfPermission(Manifest.permission.READ_MEDIA_IMAGES)
-                != PackageManager.PERMISSION_GRANTED
-            ) {
-                requestPermissions(
-                    arrayOf(Manifest.permission.READ_MEDIA_IMAGES),
-                    REQUEST_PERMISSION_IMAGE
-                )
-
-                Log.d(TAG, "checkPermission: Request manage media images")
-            }
-        }
-        if (applicationContext.checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE)
-            != PackageManager.PERMISSION_GRANTED
-        ) {
-            requestPermissions(
-                arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE),
-                REQUEST_PERMISSION_NOF
-            )
-        }
-
-    }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Intent(this, ForegroundService::class.java).apply {
@@ -115,8 +71,13 @@ class MainActivity : ComponentActivity() {
             drawMainContent()
         }
     }
+
     @Composable
-    fun drawMainContent(){
+    fun drawMainContent() {
+        var onceShotTitle by mutableStateOf("OnceShot 服务已经启动")
+        var onceShotText by mutableStateOf("点击停止")
+        var onceShotBackgroundColor by mutableStateOf(Color(getColor(R.color.teal_200)))
+        var checkPermissionPassed = false
         OnceShotTheme {
             // A surface container using the 'background' color from the theme
             Surface(
@@ -125,25 +86,50 @@ class MainActivity : ComponentActivity() {
             ) {
                 Column {
                     CreateCardButton(
-                        onClick = { /*TODO*/ },
+                        onClick = { },
                         icon = painterResource(id = R.drawable.icon_service_start),
-                        title = "OnceShot 服务已经启动",
-                        text = "点击停止",
-                        color = Color(getColor(R.color.teal_200))
+                        title = onceShotTitle,
+                        text = onceShotText,
+                        color = onceShotBackgroundColor
                     )
                     StackbricksCompose(
                         rememberCoroutineScope(),
-                        LocalContext.current, WeiboCmtsMsgPvder.MsgPvderID, "4936409558027888")
+                        LocalContext.current, WeiboCmtsMsgPvder.MsgPvderID, "4936409558027888"
+                    )
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                        CreateCardButton(
+                            onClick = { },
+                            icon = painterResource(id = R.drawable.icon_android),
+                            title = stringResource(R.string.mainwindow_androidcompatibility_title),
+                            text = stringResource(
+                                R.string.mainwindow_androidcompatibility_lowlevel_text,
+                                Build.VERSION.SDK_INT
+                            ),
+                            color = Color.Yellow
+                        )
+                    } else {
+                        CreateCardButton(
+                            onClick = { },
+                            icon = painterResource(id = R.drawable.icon_android),
+                            title = stringResource(R.string.mainwindow_androidcompatibility_title),
+                            text = stringResource(
+                                R.string.mainwindow_androidcompatibility_success_text,
+                                Build.VERSION.SDK_INT
+                            ),
+                            color = Color.Green
+                        )
+                    }
                     if (!Settings.canDrawOverlays(this@MainActivity)) {
                         CreateCardButton(
                             onClick = {
                                 requestOverlayDisplayPermission()
                             },
                             icon = painterResource(id = R.drawable.icon_floating_window),
-                            title = "需要悬浮窗权限",
-                            text = "OnceShot 需要添加悬浮窗让用户在截图后进行进一步操作",
+                            title = stringResource(R.string.mainwindow_requirepermission_floating_title),
+                            text = stringResource(R.string.mainwindow_requirepermission_floating_text),
                             color = Color.Red
                         )
+                        checkPermissionPassed = true
                     }
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                         if (applicationContext.checkSelfPermission(Manifest.permission.READ_MEDIA_IMAGES) != PackageManager.PERMISSION_GRANTED) {
@@ -155,12 +141,12 @@ class MainActivity : ComponentActivity() {
                                     )
                                 },
                                 icon = painterResource(id = R.drawable.icon_read_image),
-                                title = "需要读取设备内图片权限",
-                                text = "OnceShot 需要通过读取设备图片来监听截图操作来显示操作面板",
+                                title = stringResource(R.string.mainwindow_requirepermission_readimage_title),
+                                text = stringResource(R.string.mainwindow_requirepermission_readimage_text),
                                 color = Color.Red
                             )
-
                         }
+                        checkPermissionPassed = true
                     }
                     if (Build.VERSION.SDK_INT > Build.VERSION_CODES.R) {
                         if (!MediaStore.canManageMedia(applicationContext)) {
@@ -173,24 +159,38 @@ class MainActivity : ComponentActivity() {
                                     }
                                 },
                                 icon = painterResource(id = R.drawable.icon_mediastore_access),
-                                title = "需要媒体库管理权限",
-                                text = "OnceShot 通过对媒体库(MediaStore)的控制权限来删除无用截图",
+                                title = stringResource(R.string.mainwindow_requirepermission_mediastore_title),
+                                text = stringResource(R.string.mainwindow_requirepermission_mediastore_text),
                                 color = Color.Red
                             )
                         }
+                        checkPermissionPassed = true
                     }
-
+                    if (checkPermissionPassed) {
+                        onceShotTitle = "OnceShot 未启动"
+                        onceShotText = "请先给与 OnceShot 全部的必须权限，然后退出重进"
+                        onceShotBackgroundColor = Color.Red
+                        stopService(Intent(LocalContext.current, ForegroundService::class.java))
+                    }
                     CreateCardButton(
-                        onClick = { /*TODO*/ },
+                        onClick = { },
+                        icon = painterResource(id = R.drawable.icon_material_design),
+                        title = stringResource(R.string.mainwindow_onceshot_compose_title),
+                        text = stringResource(R.string.mainwindow_onceshot_compose_text),
+                        color = Color.Blue
+                    )
+                    CreateCardButton(
+                        onClick = { },
                         icon = painterResource(id = R.drawable.stackbricks_logo),
-                        title = "OnceShot 由 Renegade Creation 开发",
-                        text = "作者：@aquamarine5 (@海蓝色的咕咕鸽)",
+                        title = stringResource(R.string.mainwindow_onceshot_creation_title),
+                        text = stringResource(R.string.mainwindow_onceshot_creation_text),
                         color = Color.Blue
                     )
                 }
             }
         }
     }
+
     @Composable
     fun CreateCardButton(
         onClick: () -> Unit,
@@ -214,13 +214,14 @@ class MainActivity : ComponentActivity() {
                     .padding(7.dp)
                     .fillMaxWidth()
             ) {
-                val iconModifier=Modifier
+                val iconModifier = Modifier
                     .padding(10.dp, 0.dp, 20.dp, 0.dp)
-                    //.size(35.dp)
+                //.size(35.dp)
                 Icon(
                     painter = icon,
                     contentDescription = "",
-                    modifier = iconModifier
+                    modifier = iconModifier,
+                    tint=Color.Unspecified
                 )
                 Column(
                     horizontalAlignment = Alignment.Start,
@@ -254,49 +255,96 @@ fun GreetingPreview() {
                 color = MaterialTheme.colorScheme.background
             ) {
                 Column {
+                    a.apply {
+                        var onceShotTitle by mutableStateOf("OnceShot 服务已经启动")
+                        var onceShotText by mutableStateOf("点击停止")
+                        var onceShotBackgroundColor by mutableStateOf(Color.Green)
+                        var checkPermissionPassed = false
+                        CreateCardButton(
+                            onClick = { },
+                            icon = painterResource(id = R.drawable.icon_service_start),
+                            title = onceShotTitle,
+                            text = onceShotText,
+                            color = onceShotBackgroundColor
+                        )
+                        StackbricksCompose(
+                            rememberCoroutineScope(),
+                            LocalContext.current, WeiboCmtsMsgPvder.MsgPvderID, "4936409558027888"
+                        )
+                        CreateCardButton(
+                            onClick = { },
+                            icon = painterResource(id = R.drawable.icon_android),
+                            title = "OnceShot 目前仅测试了 Android 33 (Tiramisu) 及以上版本的正确使用，其他版本可能会出现问题",
+                            text = "您的手机Android版本为${Build.VERSION.SDK_INT}，低于设计版本",
+                            color = Color.Yellow
+                        )
+                        CreateCardButton(
+                            onClick = { },
+                            icon = painterResource(id = R.drawable.icon_android),
+                            title = "OnceShot 目前仅测试了 Android 33 (Tiramisu) 及以上版本的正确使用，其他版本可能会出现问题",
+                            text = "您的手机 Android 版本为 ${Build.VERSION.SDK_INT}，可以正常使用",
+                            color = Color.Green
+                        )
 
-                    a.CreateCardButton(
-                        onClick = { /*TODO*/ },
-                        icon = painterResource(id = R.drawable.onceshot_logo),
-                        title = "",
-                        text = "",
-                        color = Color.Blue
-                    )
-                    a.CreateCardButton(
-                        onClick = { a.requestOverlayDisplayPermission() },
-                        icon = painterResource(id = R.drawable.icon_floating_window),
-                        title = "需要悬浮窗权限",
-                        text = "OnceShot 需要添加悬浮窗让用户在截图后进行进一步操作",
-
-                        color = Color.Red
-                    )
-
-                    a.CreateCardButton(
+                        CreateCardButton(
                             onClick = {
-
+                                requestOverlayDisplayPermission()
                             },
-                    icon = painterResource(id = R.drawable.icon_mediastore_access),
-                    title = "需要媒体库管理权限",
-                    text = "OnceShot 通过对媒体库(MediaStore)的控制权限来删除无用截图",
-                    color = Color.Red
-                    )
-                    a.CreateCardButton(
+                            icon = painterResource(id = R.drawable.icon_floating_window),
+                            title = "需要悬浮窗权限",
+                            text = "OnceShot 需要添加悬浮窗让用户在截图后进行进一步操作",
+                            color = Color.Red
+                        )
+                        CreateCardButton(
                             onClick = {
-
+                                requestPermissions(
+                                    arrayOf(Manifest.permission.READ_MEDIA_IMAGES),
+                                    MainActivity.REQUEST_PERMISSION_IMAGE
+                                )
                             },
-                    icon = painterResource(id = R.drawable.icon_read_image),
-                    title = "需要读取设备内图片权限",
-                    text = "OnceShot 需要通过读取设备图片来监听截图操作来显示操作面板",
-                    color = Color.Red
-                    )
+                            icon = painterResource(id = R.drawable.icon_read_image),
+                            title = "需要读取设备内图片权限",
+                            text = "OnceShot 需要通过读取设备图片来监听截图操作来显示操作面板",
+                            color = Color.Red
+                        )
 
-                    a.CreateCardButton(
-                            onClick = { /*TODO*/ },
-                    icon = painterResource(id = R.drawable.stackbricks_logo),
-                    title = "",
-                    text = "",
-                    color = Color.Blue
-                    )
+
+                        CreateCardButton(
+                            onClick = {
+                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                                    startActivity(Intent(Settings.ACTION_REQUEST_MANAGE_MEDIA).apply {
+                                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                    })
+                                }
+                            },
+                            icon = painterResource(id = R.drawable.icon_mediastore_access),
+                            title = "需要媒体库管理权限",
+                            text = "OnceShot 通过对媒体库(MediaStore)的控制权限来删除无用截图",
+                            color = Color.Red
+                        )
+
+
+                        if (checkPermissionPassed) {
+                            onceShotTitle = "OnceShot 未启动"
+                            onceShotText = "请先给与 OnceShot 全部的必须权限，然后退出重进"
+                            onceShotBackgroundColor = Color.Red
+                            stopService(Intent(LocalContext.current, ForegroundService::class.java))
+                        }
+                        CreateCardButton(
+                            onClick = { },
+                            icon = painterResource(id = R.drawable.icon_material_design),
+                            title = "OnceShot 使用推荐用于构建原生 Android 界面的新工具包 Jetpack Compose 开发",
+                            text = "OnceShot 遵循 Material Design 3 设计理念",
+                            color = Color.Blue
+                        )
+                        CreateCardButton(
+                            onClick = { },
+                            icon = painterResource(id = R.drawable.stackbricks_logo),
+                            title = "OnceShot 由 Renegade Creation 开发",
+                            text = "作者：@aquamarine5 (@海蓝色的咕咕鸽)",
+                            color = Color.Blue
+                        )
+                    }
                 }
             }
 

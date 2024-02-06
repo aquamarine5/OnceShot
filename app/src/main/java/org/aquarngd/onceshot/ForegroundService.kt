@@ -67,6 +67,7 @@ class ForegroundService : Service() {
 
             INTENT_DEFAULT -> {
 
+                Log.w(classTag, "Received default start intent.")
             }
 
             INTENT_DELETE_DIRECTLY -> {
@@ -92,7 +93,7 @@ class ForegroundService : Service() {
                 closeFloatingWindow()
             }
         }
-        if (intent != null) Log.d(classTag, isLive.toString())
+        if (intent != null) Log.d(classTag, "isLive: $isLive")
         if (!isLive) {
             isLive = true
             startFileObserver()
@@ -248,7 +249,6 @@ class ForegroundService : Service() {
 
     private fun startFileObserver() {
         screenShotListenManager.setListener {
-
             relativePath = ContentUris.withAppendedId(
                 MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
                 it
@@ -321,6 +321,7 @@ class ForegroundService : Service() {
             setOngoing(true)
         }
 
+        Log.d(classTag, "Call startForeground")
         startForeground(11, builder.build())
     }
 }

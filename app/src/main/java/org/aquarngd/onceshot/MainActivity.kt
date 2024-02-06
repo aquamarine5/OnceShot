@@ -8,6 +8,7 @@ import android.os.Build
 import android.os.Bundle
 import android.provider.MediaStore
 import android.provider.Settings
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Arrangement
@@ -16,9 +17,13 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -47,13 +52,14 @@ class MainActivity : ComponentActivity() {
     companion object {
         const val REQUEST_PERMISSION_NOF = 1001
         const val REQUEST_PERMISSION_IMAGE = 1002
-        const val TAG = "MainActivity"
+        const val classTag = "MainActivity"
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Intent(this, ForegroundService::class.java).apply {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                Log.d(classTag,"Call startForegroundService")
                 startForegroundService(this)
             } else {
                 startService(this)
@@ -76,9 +82,10 @@ class MainActivity : ComponentActivity() {
                 modifier = Modifier.fillMaxSize(),
                 color = MaterialTheme.colorScheme.background
             ) {
-                Column {
-                    CreateCardButton(
-                        onClick = { },
+                Column(
+                    modifier = Modifier.verticalScroll(rememberScrollState())
+                ) {
+                    CreateCard(
                         icon = painterResource(id = R.drawable.icon_service_start),
                         title = onceShotTitle,
                         text = onceShotText,
@@ -89,8 +96,7 @@ class MainActivity : ComponentActivity() {
                         LocalContext.current, WeiboCommentsMsgPvder.MsgPvderID, "4936409558027888"
                     )
                     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
-                        CreateCardButton(
-                            onClick = { },
+                        CreateCard(
                             icon = painterResource(id = R.drawable.icon_android),
                             title = stringResource(R.string.mainwindow_androidcompatibility_title),
                             text = stringResource(
@@ -100,8 +106,7 @@ class MainActivity : ComponentActivity() {
                             color = Color.Yellow
                         )
                     } else {
-                        CreateCardButton(
-                            onClick = { },
+                        CreateCard(
                             icon = painterResource(id = R.drawable.icon_android),
                             title = stringResource(R.string.mainwindow_androidcompatibility_title),
                             text = stringResource(
@@ -164,15 +169,13 @@ class MainActivity : ComponentActivity() {
                         onceShotBackgroundColor = Color.Red
                         stopService(Intent(LocalContext.current, ForegroundService::class.java))
                     }
-                    CreateCardButton(
-                        onClick = { },
+                    CreateCard(
                         icon = painterResource(id = R.drawable.icon_material_design),
                         title = stringResource(R.string.mainwindow_onceshot_compose_title),
                         text = stringResource(R.string.mainwindow_onceshot_compose_text),
                         color = Color.Blue
                     )
-                    CreateCardButton(
-                        onClick = { },
+                    CreateCard(
                         icon = painterResource(id = R.drawable.stackbricks_logo),
                         title = stringResource(R.string.mainwindow_onceshot_creation_title),
                         text = stringResource(R.string.mainwindow_onceshot_creation_text),
@@ -182,7 +185,44 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
+    @Composable
+    fun CreateCard(
+        icon: Painter,
+        title: String,
+        text: String,
+        color: Color){
+        Card(
+            shape = RoundedCornerShape(18.dp),
+            colors = CardDefaults.cardColors(color),
 
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(10.dp)){
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Start,
+                modifier = Modifier
+                    .padding(22.dp,15.dp)
+                    .fillMaxWidth()
+            ) {
+                val iconModifier = Modifier
+                    .padding(10.dp, 0.dp, 20.dp, 0.dp)
+                //.size(35.dp)
+                Icon(
+                    painter = icon,
+                    contentDescription = "",
+                    modifier = iconModifier,
+                    tint = Color.Unspecified
+                )
+                Column(
+                    horizontalAlignment = Alignment.Start,
+                ) {
+                    Text(title, fontWeight = FontWeight.Bold)
+                    Text(text)
+                }
+            }
+        }
+    }
     @Composable
     fun CreateCardButton(
         onClick: () -> Unit,
@@ -252,8 +292,7 @@ fun GreetingPreview() {
                         var onceShotText by mutableStateOf("点击停止")
                         var onceShotBackgroundColor by mutableStateOf(Color.Green)
                         var checkPermissionPassed = false
-                        CreateCardButton(
-                            onClick = { },
+                        CreateCard(
                             icon = painterResource(id = R.drawable.icon_service_start),
                             title = onceShotTitle,
                             text = onceShotText,
@@ -265,8 +304,16 @@ fun GreetingPreview() {
                             WeiboCommentsMsgPvder.MsgPvderID,
                             "4936409558027888"
                         )
-                        CreateCardButton(
-                            onClick = { },
+                        CreateCard(
+                                icon = painterResource(id = R.drawable.icon_android),
+                        title = stringResource(R.string.mainwindow_androidcompatibility_title),
+                        text = stringResource(
+                            R.string.mainwindow_androidcompatibility_lowlevel_text,
+                            Build.VERSION.SDK_INT
+                        ),
+                        color = Color.Yellow
+                        )
+                        CreateCard(
                             icon = painterResource(id = R.drawable.icon_android),
                             title = "OnceShot 目前仅测试了 Android 33 (Tiramisu) 及以上版本的正确使用，其他版本可能会出现问题",
                             text = "您的手机Android版本为${Build.VERSION.SDK_INT}，低于设计版本",

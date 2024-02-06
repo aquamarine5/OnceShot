@@ -221,6 +221,10 @@ class ForegroundService : Service() {
         contentView!!.apply {
             val btnDeleteDirectly = findViewById<MaterialButton>(R.id.btn_delete_directly)
             val btnDeleteShare = findViewById<MaterialButton>(R.id.btn_delete_after_share)
+            val btnClose=findViewById<MaterialButton>(R.id.btn_close)
+            btnClose?.setOnClickListener {
+                closeFloatingWindow()
+            }
             btnDeleteDirectly?.setOnClickListener {
                 Log.d(FloatingDialog.classTag, "Call ForegroundService INTENT_DELETE_DIRECTLY")
                 deleteImage()

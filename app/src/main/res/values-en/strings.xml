@@ -32,5 +32,6 @@
     <string name="mainwindow_onceshot_creation_text">作者：@aquamarine5 (@海蓝色的咕咕鸽)</string>
     <string name="mainwindow_onceshot_compose_title">OnceShot 使用推荐用于构建原生 Android 界面的新工具包 Jetpack Compose 开发</string>
     <string name="mainwindow_onceshot_compose_text">OnceShot 遵循 Material Design 3 设计理念</string>
+    <string name="floatingdialog_btn_close">关闭</string>
 
 </resources>

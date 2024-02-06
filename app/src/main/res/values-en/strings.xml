@@ -33,5 +33,7 @@
     <string name="mainwindow_onceshot_compose_title">OnceShot 使用推荐用于构建原生 Android 界面的新工具包 Jetpack Compose 开发</string>
     <string name="mainwindow_onceshot_compose_text">OnceShot 遵循 Material Design 3 设计理念</string>
     <string name="floatingdialog_btn_close">关闭</string>
+    <string name="mainwindow_requirepermission_fileaccess_text">OnceShot 需要所有文件控制权限来删除截图</string>
+    <string name="mainwindow_requirepermission_fileaccess_title">需要所有文件控制权限</string>
 
 </resources>

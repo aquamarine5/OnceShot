@@ -6,6 +6,7 @@ import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.os.Environment
 import android.provider.MediaStore
 import android.provider.Settings
 import android.util.Log
@@ -146,6 +147,20 @@ class MainActivity : ComponentActivity() {
                         checkPermissionPassed = true
                     }
                     if (Build.VERSION.SDK_INT > Build.VERSION_CODES.R) {
+                        if(!Environment.isExternalStorageManager()){
+                            CreateCardButton(
+                                onClick = {
+                                    startActivity(Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION).apply {
+                                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                    })
+                                },
+                                icon = painterResource(id = R.drawable.icon_mediastore_access),
+                                title = stringResource(R.string.mainwindow_requirepermission_fileaccess_title),
+                                text = stringResource(R.string.mainwindow_requirepermission_fileaccess_text),
+                                color = Color.Red
+                            )
+                            checkPermissionPassed = true
+                        }
                         if (!MediaStore.canManageMedia(applicationContext)) {
                             CreateCardButton(
                                 onClick = {
@@ -160,8 +175,8 @@ class MainActivity : ComponentActivity() {
                                 text = stringResource(R.string.mainwindow_requirepermission_mediastore_text),
                                 color = Color.Red
                             )
+                            checkPermissionPassed = true
                         }
-                        checkPermissionPassed = true
                     }
                     if (checkPermissionPassed) {
                         onceShotTitle = "OnceShot 未启动"
@@ -202,7 +217,7 @@ class MainActivity : ComponentActivity() {
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.Start,
                 modifier = Modifier
-                    .padding(22.dp,15.dp)
+                    .padding(22.dp, 15.dp)
                     .fillMaxWidth()
             ) {
                 val iconModifier = Modifier

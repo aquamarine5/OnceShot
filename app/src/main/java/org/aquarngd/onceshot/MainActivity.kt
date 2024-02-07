@@ -95,7 +95,7 @@ class MainActivity : ComponentActivity() {
                     StackbricksCompose(
                         rememberCoroutineScope(),
                         LocalContext.current, WeiboCommentsMsgPvder.MsgPvderID, "4936409558027888"
-                    )
+                    ).DrawCompose()
                     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
                         CreateCard(
                             icon = painterResource(id = R.drawable.icon_android),
@@ -154,7 +154,7 @@ class MainActivity : ComponentActivity() {
                                         addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                                     })
                                 },
-                                icon = painterResource(id = R.drawable.icon_mediastore_access),
+                                icon = painterResource(id = R.drawable.icon_file_access),
                                 title = stringResource(R.string.mainwindow_requirepermission_fileaccess_title),
                                 text = stringResource(R.string.mainwindow_requirepermission_fileaccess_text),
                                 color = Color.Red
@@ -290,7 +290,7 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-@Preview
+@Preview()
 @Composable
 fun GreetingPreview() {
     OnceShotTheme {
@@ -313,42 +313,53 @@ fun GreetingPreview() {
                             text = onceShotText,
                             color = onceShotBackgroundColor
                         )
-                        StackbricksCompose(
+                        val sc=StackbricksCompose(
                             rememberCoroutineScope(),
                             LocalContext.current,
                             WeiboCommentsMsgPvder.MsgPvderID,
                             "4936409558027888"
                         )
-                        CreateCard(
-                                icon = painterResource(id = R.drawable.icon_android),
-                        title = stringResource(R.string.mainwindow_androidcompatibility_title),
-                        text = stringResource(
-                            R.string.mainwindow_androidcompatibility_lowlevel_text,
-                            Build.VERSION.SDK_INT
-                        ),
-                        color = Color.Yellow
-                        )
+                        //sc.DrawCompose()
                         CreateCard(
                             icon = painterResource(id = R.drawable.icon_android),
-                            title = "OnceShot 目前仅测试了 Android 33 (Tiramisu) 及以上版本的正确使用，其他版本可能会出现问题",
-                            text = "您的手机Android版本为${Build.VERSION.SDK_INT}，低于设计版本",
+                            title = stringResource(R.string.mainwindow_androidcompatibility_title),
+                            text = stringResource(
+                                R.string.mainwindow_androidcompatibility_lowlevel_text,
+                                Build.VERSION.SDK_INT
+                            ),
                             color = Color.Yellow
                         )
-                        CreateCardButton(
-                            onClick = { },
+                        CreateCard(
                             icon = painterResource(id = R.drawable.icon_android),
-                            title = "OnceShot 目前仅测试了 Android 33 (Tiramisu) 及以上版本的正确使用，其他版本可能会出现问题",
-                            text = "您的手机 Android 版本为 ${Build.VERSION.SDK_INT}，可以正常使用",
+                            title = stringResource(R.string.mainwindow_androidcompatibility_title),
+                            text = stringResource(
+                                R.string.mainwindow_androidcompatibility_success_text,
+                                Build.VERSION.SDK_INT
+                            ),
                             color = Color.Green
                         )
-
+                        CreateCardButton(
+                                onClick = {
+                                    startActivity(Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION).apply {
+                                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                    })
+                                },
+                        icon = painterResource(id = R.drawable.icon_file_access),
+                        title = stringResource(R.string.mainwindow_requirepermission_fileaccess_title),
+                        text = stringResource(R.string.mainwindow_requirepermission_fileaccess_text),
+                        color = Color.Red
+                        )
                         CreateCardButton(
                             onClick = {
-                                requestOverlayDisplayPermission()
+                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                                    startActivity(Intent(Settings.ACTION_REQUEST_MANAGE_MEDIA).apply {
+                                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                    })
+                                }
                             },
-                            icon = painterResource(id = R.drawable.icon_floating_window),
-                            title = "需要悬浮窗权限",
-                            text = "OnceShot 需要添加悬浮窗让用户在截图后进行进一步操作",
+                            icon = painterResource(id = R.drawable.icon_mediastore_access),
+                            title = stringResource(R.string.mainwindow_requirepermission_mediastore_title),
+                            text = stringResource(R.string.mainwindow_requirepermission_mediastore_text),
                             color = Color.Red
                         )
                         CreateCardButton(
@@ -359,27 +370,19 @@ fun GreetingPreview() {
                                 )
                             },
                             icon = painterResource(id = R.drawable.icon_read_image),
-                            title = "需要读取设备内图片权限",
-                            text = "OnceShot 需要通过读取设备图片来监听截图操作来显示操作面板",
+                            title = stringResource(R.string.mainwindow_requirepermission_readimage_title),
+                            text = stringResource(R.string.mainwindow_requirepermission_readimage_text),
                             color = Color.Red
                         )
-
-
                         CreateCardButton(
                             onClick = {
-                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                                    startActivity(Intent(Settings.ACTION_REQUEST_MANAGE_MEDIA).apply {
-                                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                                    })
-                                }
+                                requestOverlayDisplayPermission()
                             },
-                            icon = painterResource(id = R.drawable.icon_mediastore_access),
-                            title = "需要媒体库管理权限",
-                            text = "OnceShot 通过对媒体库(MediaStore)的控制权限来删除无用截图",
+                            icon = painterResource(id = R.drawable.icon_floating_window),
+                            title = stringResource(R.string.mainwindow_requirepermission_floating_title),
+                            text = stringResource(R.string.mainwindow_requirepermission_floating_text),
                             color = Color.Red
                         )
-
-
                         if (checkPermissionPassed) {
                             onceShotTitle = "OnceShot 未启动"
                             onceShotText = "请先给与 OnceShot 全部的必须权限，然后退出重进"

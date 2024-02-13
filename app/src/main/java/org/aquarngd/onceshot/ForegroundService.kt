@@ -43,7 +43,7 @@ class ForegroundService : Service() {
         const val INTENT_CLOSE_FLOATINGWINDOW = 3
     }
 
-    var screenShotListenManager: ScreenShotListenManager = ScreenShotListenManager.newInstance(this)
+    var screenShotListenManager: ScreenShotListenManager? = null
     var isLive = false
     var relativePath: String? = null
     var uri: Uri? = null
@@ -54,6 +54,7 @@ class ForegroundService : Service() {
     }
 
     override fun onCreate() {
+        screenShotListenManager=ScreenShotListenManager.newInstance(this)
         createNotification()
         super.onCreate()
     }
@@ -249,7 +250,7 @@ class ForegroundService : Service() {
     }
 
     private fun startFileObserver() {
-        screenShotListenManager.setListener {
+        screenShotListenManager!!.setListener {
             relativePath = ContentUris.withAppendedId(
                 MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
                 it
@@ -267,7 +268,7 @@ class ForegroundService : Service() {
             sendNotification(it)
             Log.d(classTag,"Call screenShotListenManager, uri:$uri")
         }
-        screenShotListenManager.startListen()
+        screenShotListenManager!!.startListen()
     }
 
     private fun readImage(id: Long): Bitmap {

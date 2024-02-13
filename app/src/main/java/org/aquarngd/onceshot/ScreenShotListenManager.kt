@@ -320,7 +320,7 @@ class ScreenShotListenManager private constructor(context: Context?) {
                 val defaultDisplay = windowManager.defaultDisplay
                 defaultDisplay.getRealSize(screenSize)
             } catch (e: Exception) {
-                e.printStackTrace()
+                throw e
             }
             return screenSize
         }

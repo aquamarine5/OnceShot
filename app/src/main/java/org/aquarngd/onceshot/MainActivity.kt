@@ -92,6 +92,12 @@ class MainActivity : ComponentActivity() {
                         text = onceShotText,
                         color = onceShotBackgroundColor
                     )
+                    CreateCard(
+                        icon= painterResource(id = R.drawable.icon_test),
+                        title="OnceShot 仍在测试当中",
+                        text="Build version: 第 45 次测试",
+                        color=Color.Yellow
+                    )
                     StackbricksCompose(
                         rememberCoroutineScope(),
                         LocalContext.current, WeiboCommentsMsgPvder.MsgPvderID, "4936409558027888"

@@ -35,6 +35,7 @@ class ForegroundService : Service() {
         const val foregroundServiceChannelId = "org.aquarngd.onceshot.foreground_channel"
         const val intent_type_id = "intent_extras_data_type"
         const val intent_path_id = "intent_extras_data_path"
+        const val intent_uri_id = "intent_extras_data_uri"
         const val INTENT_DEFAULT = 0
         const val INTENT_SHARE_DELETE = 1
         const val INTENT_DELETE_DIRECTLY = 11
@@ -53,10 +54,9 @@ class ForegroundService : Service() {
     }
 
     override fun onCreate() {
-        super.onCreate()
         createNotification()
+        super.onCreate()
     }
-
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         Log.i(classTag, "Received intent: " + intent?.getIntExtra(intent_type_id, INTENT_DEFAULT))
         if (intent != null) when (intent.getIntExtra(intent_type_id, INTENT_DEFAULT)) {
@@ -71,6 +71,7 @@ class ForegroundService : Service() {
             }
 
             INTENT_DELETE_DIRECTLY -> {
+                Log.d(classTag, "Received default start intent.")
                 deleteImage()
                 closeFloatingWindow()
             }
@@ -227,12 +228,12 @@ class ForegroundService : Service() {
                 closeFloatingWindow()
             }
             btnDeleteDirectly?.setOnClickListener {
-                Log.d(FloatingDialog.classTag, "Call ForegroundService INTENT_DELETE_DIRECTLY")
+                Log.d(classTag, "Call ForegroundService INTENT_DELETE_DIRECTLY")
                 deleteImage()
                 closeFloatingWindow()
             }
             btnDeleteShare?.setOnClickListener {
-                Log.d(FloatingDialog.classTag, "Call ForegroundService INTENT_SHARE_DELETE")
+                Log.d(classTag, "Call ForegroundService INTENT_SHARE_DELETE")
                 onClickShareDeleteButton()
                 //renderShareableApplicationsLayout(contentView!!, getAllShareableApplications())
             }
@@ -258,12 +259,13 @@ class ForegroundService : Service() {
                 it
             )
             startService(Intent().apply {
-                setClass(applicationContext, ForegroundService::class.java)
+                setClass(applicationContext, FloatingDialogService::class.java)
                 putExtra(intent_type_id, INTENT_SHOW_FLOATINGWINDOW)
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                putExtra(intent_uri_id,it)
+                //addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             })
             sendNotification(it)
-
+            Log.d(classTag,"Call screenShotListenManager, uri:$uri")
         }
         screenShotListenManager.startListen()
     }
@@ -274,10 +276,10 @@ class ForegroundService : Service() {
             id
         )
         relativePath = uri.encodedPath
-        if (Build.VERSION.SDK_INT >= 29) {
+        return if (Build.VERSION.SDK_INT >= 29) {
             Log.d(classTag, id.toString())
-            return ImageDecoder.decodeBitmap(ImageDecoder.createSource(contentResolver, uri))
-        } else return Bitmap.createBitmap(111, 111, Bitmap.Config.ARGB_8888)
+            ImageDecoder.decodeBitmap(ImageDecoder.createSource(contentResolver, uri))
+        } else Bitmap.createBitmap(111, 111, Bitmap.Config.ARGB_8888)
     }
 
     private fun sendNotification(id: Long) {

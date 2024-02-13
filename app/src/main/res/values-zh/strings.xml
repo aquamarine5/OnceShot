@@ -6,8 +6,8 @@
     <string name="nof_screenshot_channel">捕捉到的截图事件</string>
     <string name="nof_button_sharedelete">分享后刪除</string>
     <string name="share_screenshot">分享截图</string>
-    <string name="btn_DeleteAfterShare">复制后删除</string>
-    <string name="FloatingDialog_DeleteAfterShare">复制后删除</string>
+    <string name="btn_DeleteAfterShare">分享后删除</string>
+    <string name="FloatingDialog_DeleteAfterShare">分享后删除</string>
     <string name="FloatingDialog_OnceShot">OnceShot 操作面板</string>
     <string name="FloatingDialog_Delete">直接删除</string>
     <string name="stackbricks_tips_newversion">有最新版本</string>

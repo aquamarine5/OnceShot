@@ -2,7 +2,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE"
+    <uses-permission
+        android:name="android.permission.MANAGE_EXTERNAL_STORAGE"
         tools:ignore="ScopedStorage" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
@@ -34,6 +35,7 @@
         <activity
             android:name=".FloatingDialog"
             android:exported="true"
+
             android:theme="@style/Theme.Material3.DayNight.NoActionBar" />
         <activity
             android:name=".MainActivity"
@@ -45,19 +47,28 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
         <service
-            android:name="org.aquarngd.onceshot.ForegroundService"
+            android:name=".FloatingDialogService"
+            android:label="FloatingDialogService"/>
+        <service
+            android:name=".ForegroundService"
             android:exported="true"
-            android:label="ForegroundService"/>
-        <provider android:authorities="${applicationId}.file_provider" android:name="androidx.core.content.FileProvider" android:exported="false" android:grantUriPermissions="true">
-            <meta-data android:name="android.support.FILE_PROVIDER_PATHS" android:resource="@xml/file_provider_paths"/>
+            android:label="ForegroundService"
+            android:launchMode="singleTop" />
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.file_provider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_provider_paths" />
         </provider>
     </application>
     <queries>
         <intent>
-            <action android:name="android.intent.action.SEND"/>
-            <data android:mimeType="image/*"/>
+            <action android:name="android.intent.action.SEND" />
+            <data android:mimeType="image/*" />
         </intent>
     </queries>
 </manifest>

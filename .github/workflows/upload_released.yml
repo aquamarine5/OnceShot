@@ -27,6 +27,6 @@ jobs:
       id: version
       run: echo "VERSION=${GITHUB_REF:10}" >> $GITHUB_OUTPUT
     - name: Upload apk file
-      run: gh release upload ${{steps.version.outputs.VERSION}} app/build/outputs/apk/releases/app-release.apk
+      run: gh release upload ${{steps.version.outputs.VERSION}} app/build/outputs/apk/releases/app-release-unsigned.apk
       env:
         GH_TOKEN: ${{ github.token }}

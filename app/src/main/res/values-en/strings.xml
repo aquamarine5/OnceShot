@@ -35,5 +35,7 @@
     <string name="floatingdialog_btn_close">关闭</string>
     <string name="mainwindow_requirepermission_fileaccess_text">OnceShot 需要所有文件控制权限来删除截图</string>
     <string name="mainwindow_requirepermission_fileaccess_title">需要所有文件控制权限</string>
+    <string name="mainwindow_requirepermission_notification_title">需要通知权限</string>
+    <string name="mainwindow_requirepermission_notification_text">在新版本的 Android 中，OnceShot 需要通知权限来创建前台服务</string>
 
 </resources>

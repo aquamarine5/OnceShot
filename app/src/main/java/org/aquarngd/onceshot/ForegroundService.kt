@@ -30,9 +30,9 @@ class ForegroundService : Service() {
     companion object {
         const val classTag = "ForegroundService"
         const val threadName = "org.aquarngd.onceshot.screenshot_observer"
-        const val notificationId = "org.aqaurngd.onceshot.notification"
-        const val channelId = "org.aquarngd.onceshot.notification_channel"
-        const val foregroundServiceChannelId = "org.aquarngd.onceshot.foreground_channel"
+        const val notificationId = "onceshot.notification"
+        const val channelId = "notification_channel"
+        const val foregroundServiceChannelId = "foreground_channel"
         const val intent_type_id = "intent_extras_data_type"
         const val intent_path_id = "intent_extras_data_path"
         const val intent_uri_id = "intent_extras_data_uri"
@@ -54,77 +54,27 @@ class ForegroundService : Service() {
     }
 
     override fun onCreate() {
-        screenShotListenManager=ScreenShotListenManager.newInstance(this)
+        screenShotListenManager = ScreenShotListenManager.newInstance(this)
         createNotification()
         super.onCreate()
     }
+
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         Log.i(classTag, "Received intent: " + intent?.getIntExtra(intent_type_id, INTENT_DEFAULT))
         if (intent != null) when (intent.getIntExtra(intent_type_id, INTENT_DEFAULT)) {
-            INTENT_SHOW_FLOATINGWINDOW -> {
-                Log.d(classTag, "Received show floating window intent.")
-                createFloatingWindow()
-            }
-
-            INTENT_DEFAULT -> {
-
-                Log.w(classTag, "Received default start intent.")
-            }
-
-            INTENT_DELETE_DIRECTLY -> {
-                Log.d(classTag, "Received default start intent.")
-                deleteImage()
-                closeFloatingWindow()
-            }
-
-            INTENT_SHARE_DELETE -> {
-                val chooserIntent = Intent.createChooser(Intent().apply {
-                    action = Intent.ACTION_SEND
-                    putExtra(Intent.EXTRA_STREAM, uri)
-                    type = "image/*"
-                }, getString(R.string.share_screenshot))
-                startActivity(chooserIntent)
-                Log.d(classTag, "ShareImage")
-                Handler().postDelayed({
-                    deleteImage()
-                }, 10000)
-                closeFloatingWindow()
-            }
-
-            INTENT_CLOSE_FLOATINGWINDOW -> {
-                closeFloatingWindow()
-            }
         }
-        if (intent != null) Log.d(classTag, "isLive: $isLive")
         if (!isLive) {
             isLive = true
             startFileObserver()
         }
-        return super.onStartCommand(intent, flags, startId)
-    }
-
-    private fun closeFloatingWindow() {
-
-        if (contentView != null) {
-            val windowManager = getSystemService(Context.WINDOW_SERVICE) as WindowManager
-            windowManager.removeView(contentView)
-            contentView = null
-        }
+        return START_STICKY
     }
 
     override fun onDestroy() {
+        Log.w(classTag, "Received onDestroy")
         super.onDestroy()
         isLive = false
         stopForeground(STOP_FOREGROUND_DETACH)
-    }
-
-    private fun deleteImage() {
-        if (uri == null) {
-            Log.e(classTag, "Delete image: Uri is null!")
-            return
-        }
-        val result = contentResolver.delete(uri!!, null, null);
-        Log.d(classTag, "Delete image result:${{ result == 1 }}")
     }
 
     private fun getAllShareableApplications(): List<ResolveInfo> {
@@ -168,31 +118,11 @@ class ForegroundService : Service() {
                     )
                 }
                 button.setOnClickListener {
-                    onClickShareDeleteButton()
+                    //onClickShareDeleteButton()
                 }
                 shareableLayout.addView(button)
             }
         }
-    }
-
-    private fun shareImage() {
-        startActivity(
-            Intent.createChooser(Intent(Intent.ACTION_SEND).apply {
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                putExtra(Intent.EXTRA_STREAM, uri)
-                type = "image/*"
-            }, "j").apply {
-
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            })
-    }
-
-    private fun onClickShareDeleteButton() {
-        shareImage()
-        closeFloatingWindow()
-        Handler().postDelayed({
-            deleteImage()
-        }, 10000)
     }
 
     private fun removeFloatingWindowButtons(view: View) {
@@ -202,51 +132,6 @@ class ForegroundService : Service() {
             btnDeleteDirectly.visibility = View.GONE
             btnDeleteShare.visibility = View.GONE
         }
-    }
-
-    private fun createFloatingWindow() {
-        val windowManager = getSystemService(Context.WINDOW_SERVICE) as WindowManager
-        val windowParams = WindowManager.LayoutParams().apply {
-            gravity = Gravity.START or Gravity.TOP
-            x = 20
-            y = 100
-            type = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
-                WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
-            else
-                WindowManager.LayoutParams.TYPE_PHONE
-            width = WindowManager.LayoutParams.WRAP_CONTENT
-            height = WindowManager.LayoutParams.WRAP_CONTENT
-            flags = (WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL
-                    or WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE)
-        }
-        contentView = LayoutInflater.from(this).inflate(R.layout.activity_floating_dialog, null)
-        windowManager.addView(contentView, windowParams)
-        contentView!!.apply {
-            val btnDeleteDirectly = findViewById<MaterialButton>(R.id.btn_delete_directly)
-            val btnDeleteShare = findViewById<MaterialButton>(R.id.btn_delete_after_share)
-            val btnClose=findViewById<MaterialButton>(R.id.btn_close)
-            btnClose?.setOnClickListener {
-                closeFloatingWindow()
-            }
-            btnDeleteDirectly?.setOnClickListener {
-                Log.d(classTag, "Call ForegroundService INTENT_DELETE_DIRECTLY")
-                deleteImage()
-                closeFloatingWindow()
-            }
-            btnDeleteShare?.setOnClickListener {
-                Log.d(classTag, "Call ForegroundService INTENT_SHARE_DELETE")
-                onClickShareDeleteButton()
-                //renderShareableApplicationsLayout(contentView!!, getAllShareableApplications())
-            }
-        }
-        Log.d(classTag, "Create FloatingDialog successfully.")
-    }
-
-    private fun sendForegroundServiceIntent(intentType: Int) {
-        startActivity(Intent().apply {
-            setClass(applicationContext, ForegroundService::class.java)
-            putExtra(intent_type_id, intentType)
-        })
     }
 
     private fun startFileObserver() {
@@ -262,11 +147,10 @@ class ForegroundService : Service() {
             startService(Intent().apply {
                 setClass(applicationContext, FloatingDialogService::class.java)
                 putExtra(intent_type_id, INTENT_SHOW_FLOATINGWINDOW)
-                putExtra(intent_uri_id,it)
-                //addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                putExtra(intent_uri_id, it)
             })
             sendNotification(it)
-            Log.d(classTag,"Call screenShotListenManager, uri:$uri")
+            Log.d(classTag, "Call screenShotListenManager, uri:$uri")
         }
         screenShotListenManager!!.startListen()
     }
@@ -303,7 +187,7 @@ class ForegroundService : Service() {
             setContentText("path")
             setWhen(System.currentTimeMillis())
         }
-        manager.notify(22, builder.build())
+        manager.notify(22454, builder.build())
     }
 
     private fun createNotification() {
@@ -313,18 +197,22 @@ class ForegroundService : Service() {
                 notificationId,
                 foregroundServiceChannelId, NotificationManager.IMPORTANCE_HIGH
             )
+            channel.enableLights(true)
+            channel.setShowBadge(true)
+
             channel.description = getString(R.string.nof_channel_description)
             manager.createNotificationChannel(channel)
         }
         val builder = NotificationCompat.Builder(this, notificationId).apply {
-            setSmallIcon(R.drawable.ic_launcher_foreground)
+            setSmallIcon(R.drawable.onceshot_logo)
             setContentTitle(getString(R.string.nof_title))
             setContentText(getString(R.string.nof_text))
+            priority = NotificationCompat.PRIORITY_HIGH
             setWhen(System.currentTimeMillis())
             setOngoing(true)
         }
 
         Log.d(classTag, "Call startForeground")
-        startForeground(11, builder.build())
+        startForeground(16451, builder.build())
     }
 }

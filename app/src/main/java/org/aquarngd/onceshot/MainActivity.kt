@@ -1,6 +1,7 @@
 package org.aquarngd.onceshot
 
 import android.Manifest
+import android.content.Context.MODE_PRIVATE
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
@@ -15,11 +16,15 @@ import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -29,9 +34,11 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -41,18 +48,23 @@ import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import org.aquarngd.onceshot.ui.theme.OnceShotTheme
 import org.aquarngd.stackbricks.StackbricksCompose
 import org.aquarngd.stackbricks.WeiboCommentsMsgPvder
 
+
 class MainActivity : ComponentActivity() {
 
     companion object {
         const val REQUEST_PERMISSION_NOF = 1001
         const val REQUEST_PERMISSION_IMAGE = 1002
+        const val SPKEY_DURATION = "duration"
+        const val SPNAME = "onceshot"
         const val classTag = "MainActivity"
     }
 
@@ -60,7 +72,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         Intent(this, ForegroundService::class.java).apply {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                Log.d(classTag,"Call startForegroundService")
+                Log.d(classTag, "Call startForegroundService")
                 startForegroundService(this)
             } else {
                 startService(this)
@@ -93,15 +105,16 @@ class MainActivity : ComponentActivity() {
                         color = onceShotBackgroundColor
                     )
                     CreateCard(
-                        icon= painterResource(id = R.drawable.icon_test),
-                        title="OnceShot 仍在测试当中",
-                        text="Build version: 第 45 次测试",
-                        color=Color.Yellow
+                        icon = painterResource(id = R.drawable.icon_test),
+                        title = "OnceShot 仍在测试当中",
+                        text = "Build version: 第 82 次测试",
+                        color = Color.Yellow
                     )
                     StackbricksCompose(
                         rememberCoroutineScope(),
-                        LocalContext.current, WeiboCommentsMsgPvder.MsgPvderID, "4936409558027888"
+                        LocalContext.current, WeiboCommentsMsgPvder.MsgPvderID, "5001248562483153"
                     ).DrawCompose()
+                    drawDurationSettingCard()
                     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
                         CreateCard(
                             icon = painterResource(id = R.drawable.icon_android),
@@ -123,6 +136,7 @@ class MainActivity : ComponentActivity() {
                             color = Color.Green
                         )
                     }
+
                     if (!Settings.canDrawOverlays(this@MainActivity)) {
                         CreateCardButton(
                             onClick = {
@@ -149,11 +163,26 @@ class MainActivity : ComponentActivity() {
                                 text = stringResource(R.string.mainwindow_requirepermission_readimage_text),
                                 color = Color.Red
                             )
+                            checkPermissionPassed = true
                         }
-                        checkPermissionPassed = true
+                        if (applicationContext.checkSelfPermission(Manifest.permission.READ_MEDIA_IMAGES) != PackageManager.PERMISSION_GRANTED) {
+                            CreateCardButton(
+                                onClick = {
+                                    requestPermissions(
+                                        arrayOf(Manifest.permission.POST_NOTIFICATIONS),
+                                        REQUEST_PERMISSION_NOF
+                                    )
+                                },
+                                icon = painterResource(id = R.drawable.icon_notification),
+                                title = stringResource(R.string.mainwindow_requirepermission_notification_title),
+                                text = stringResource(R.string.mainwindow_requirepermission_notification_text),
+                                color = Color.Red
+                            )
+                            checkPermissionPassed = true
+                        }
                     }
                     if (Build.VERSION.SDK_INT > Build.VERSION_CODES.R) {
-                        if(!Environment.isExternalStorageManager()){
+                        if (!Environment.isExternalStorageManager()) {
                             CreateCardButton(
                                 onClick = {
                                     startActivity(Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION).apply {
@@ -188,7 +217,7 @@ class MainActivity : ComponentActivity() {
                         onceShotTitle = "OnceShot 未启动"
                         onceShotText = "请先给与 OnceShot 全部的必须权限，然后退出重进"
                         onceShotBackgroundColor = Color.Red
-                        stopService(Intent(LocalContext.current, ForegroundService::class.java))
+                        //stopService(Intent(LocalContext.current, ForegroundService::class.java))
                     }
                     CreateCard(
                         icon = painterResource(id = R.drawable.icon_material_design),
@@ -206,19 +235,78 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
+
+    @Composable
+    fun drawDurationSettingCard() {
+        Card(
+            shape = RoundedCornerShape(18.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(10.dp)
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Start,
+                modifier = Modifier
+                    .padding(22.dp, 15.dp)
+                    .fillMaxWidth()
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.icon_clock),
+                    contentDescription = "",
+                    modifier = Modifier
+                        .padding(10.dp, 0.dp, 20.dp, 0.dp),
+                    tint = Color.Unspecified
+                )
+                Column(
+                    horizontalAlignment = Alignment.Start,
+                ) {
+                    Text("设置\"分享后删除\"操作在分享多久后删除截图", fontWeight = FontWeight.Bold)
+                    // getSharedPreferences(SPNAME, MODE_PRIVATE).getInt(SPKEY_DURATION, 30).toString()
+                    val text by remember {
+                        mutableStateOf(""
+                        )
+                    }
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceAround,
+                        modifier =Modifier.fillMaxWidth()
+                    ) {
+                        TextField(
+                            modifier=Modifier.width(160.dp),
+                            value = text,
+                            onValueChange = {},
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                        )
+                        Button(onClick = {
+                            val sharedPreferences =
+                                getSharedPreferences(SPNAME, MODE_PRIVATE).edit()
+                            sharedPreferences.putInt(SPKEY_DURATION, text.toInt())
+                            sharedPreferences.apply()
+                        }) {
+                            Text("保存")
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     @Composable
     fun CreateCard(
         icon: Painter,
         title: String,
         text: String,
-        color: Color){
+        color: Color
+    ) {
         Card(
             shape = RoundedCornerShape(18.dp),
             colors = CardDefaults.cardColors(color),
 
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(10.dp)){
+                .padding(10.dp)
+        ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.Start,
@@ -244,6 +332,7 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
+
     @Composable
     fun CreateCardButton(
         onClick: () -> Unit,
@@ -312,20 +401,14 @@ fun GreetingPreview() {
                         var onceShotTitle by mutableStateOf("OnceShot 服务已经启动")
                         var onceShotText by mutableStateOf("点击停止")
                         var onceShotBackgroundColor by mutableStateOf(Color.Green)
-                        var checkPermissionPassed = false
+                        val checkPermissionPassed = false
                         CreateCard(
                             icon = painterResource(id = R.drawable.icon_service_start),
                             title = onceShotTitle,
                             text = onceShotText,
                             color = onceShotBackgroundColor
                         )
-                        val sc=StackbricksCompose(
-                            rememberCoroutineScope(),
-                            LocalContext.current,
-                            WeiboCommentsMsgPvder.MsgPvderID,
-                            "4936409558027888"
-                        )
-                        //sc.DrawCompose()
+                        drawDurationSettingCard()
                         CreateCard(
                             icon = painterResource(id = R.drawable.icon_android),
                             title = stringResource(R.string.mainwindow_androidcompatibility_title),
@@ -345,15 +428,15 @@ fun GreetingPreview() {
                             color = Color.Green
                         )
                         CreateCardButton(
-                                onClick = {
-                                    startActivity(Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION).apply {
-                                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                                    })
-                                },
-                        icon = painterResource(id = R.drawable.icon_file_access),
-                        title = stringResource(R.string.mainwindow_requirepermission_fileaccess_title),
-                        text = stringResource(R.string.mainwindow_requirepermission_fileaccess_text),
-                        color = Color.Red
+                            onClick = {
+                                startActivity(Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION).apply {
+                                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                })
+                            },
+                            icon = painterResource(id = R.drawable.icon_file_access),
+                            title = stringResource(R.string.mainwindow_requirepermission_fileaccess_title),
+                            text = stringResource(R.string.mainwindow_requirepermission_fileaccess_text),
+                            color = Color.Red
                         )
                         CreateCardButton(
                             onClick = {
@@ -412,8 +495,6 @@ fun GreetingPreview() {
                     }
                 }
             }
-
-
         }
     }
 }

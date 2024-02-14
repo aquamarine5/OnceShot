@@ -13,7 +13,6 @@ class WeiboCommentsMsgPvder() : IMsgPvder {
         get() = MsgPvderID
 
     companion object {
-
         const val MsgPvderID = "stbkt.msgpvder.weibocmts"
     }
 

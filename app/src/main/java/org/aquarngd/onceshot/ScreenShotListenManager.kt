@@ -116,7 +116,7 @@ class ScreenShotListenManager private constructor(context: Context?) {
             )
             if (!checkCallback(data)) {
                 mListener(idData)
-                Log.d(TAG,"Call mListener")
+                Log.d(TAG, "Call mListener")
             }
         } else {
             // 如果在观察区间媒体数据库有数据改变，又不符合截屏规则，则输出到 log 待分析
@@ -196,7 +196,7 @@ class ScreenShotListenManager private constructor(context: Context?) {
     /**
      * 设置截屏监听器
      */
-    fun setListener(listener: (Long)->Unit) {
+    fun setListener(listener: (Long) -> Unit) {
         mListener = listener
     }
 
@@ -279,7 +279,7 @@ class ScreenShotListenManager private constructor(context: Context?) {
      * 运行在 UI 线程的 Handler, 用于运行监听器回调
      */
     private val mUiHandler = Handler(Looper.getMainLooper())
-    private var mListener: (Long)->Unit = {  }
+    private var mListener: (Long) -> Unit = { }
     private var mStartListenTime: Long = 0
 
     /**

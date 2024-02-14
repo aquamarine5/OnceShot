@@ -32,7 +32,7 @@ class FloatingDialogService : Service() {
     private var uri: Uri? = null
     private var contentView: View? = null
     override fun onBind(intent: Intent?): IBinder? {
-        TODO("Not yet implemented")
+        return null
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -43,11 +43,10 @@ class FloatingDialogService : Service() {
             )
         )
         if (intent != null) {
-            val id=intent.getLongExtra(intent_uri_id,-1)
-            if(id==-1L){
-                Log.e(classTag,"Id is null!")
-            }
-            else{
+            val id = intent.getLongExtra(intent_uri_id, -1)
+            if (id == -1L) {
+                Log.e(classTag, "Id is null!")
+            } else {
                 uri = ContentUris.withAppendedId(
                     MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
                     id
@@ -109,9 +108,11 @@ class FloatingDialogService : Service() {
         closeFloatingWindow()
         Handler().postDelayed({
             deleteImage()
-        }, 10000)
+        }, getDuration()*1000L)
     }
-
+    private fun getDuration():Int{
+        return getSharedPreferences(MainActivity.SPNAME, MODE_PRIVATE).getInt(MainActivity.SPKEY_DURATION,30)
+    }
     private fun createFloatingWindow() {
         val windowManager = getSystemService(Context.WINDOW_SERVICE) as WindowManager
         val windowParams = WindowManager.LayoutParams().apply {

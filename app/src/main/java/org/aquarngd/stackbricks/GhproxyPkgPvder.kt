@@ -30,7 +30,7 @@ class GhproxyPkgPvder : IPkgPvder {
 
         val data = pkgPvderData.split("]]")
         val url =
-            "https://ghproxy.com/github.com/${data[0]}/${data[1]}/releases/download/${data[2]}/${data[3]}"
+            "https://mirror.ghproxy.com/github.com/${data[0]}/${data[1]}/releases/download/${data[2]}/${data[3]}"
         val req = Request.Builder()
             .url(url)
             .build()

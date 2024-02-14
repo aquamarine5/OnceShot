@@ -1,6 +1,7 @@
 package org.aquarngd.onceshot
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.content.Context.MODE_PRIVATE
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -8,6 +9,7 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.Environment
+import android.os.PowerManager
 import android.provider.MediaStore
 import android.provider.Settings
 import android.util.Log
@@ -46,6 +48,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontStyle
@@ -83,6 +86,7 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    @SuppressLint("BatteryLife")
     @Composable
     fun drawMainContent() {
         var onceShotTitle by mutableStateOf("OnceShot 服务已经启动")
@@ -107,7 +111,7 @@ class MainActivity : ComponentActivity() {
                     CreateCard(
                         icon = painterResource(id = R.drawable.icon_test),
                         title = "OnceShot 仍在测试当中",
-                        text = "Build version: 第 82 次测试",
+                        text = "Build version: 第 97 次测试",
                         color = Color.Yellow
                     )
                     StackbricksCompose(
@@ -145,7 +149,7 @@ class MainActivity : ComponentActivity() {
                             icon = painterResource(id = R.drawable.icon_floating_window),
                             title = stringResource(R.string.mainwindow_requirepermission_floating_title),
                             text = stringResource(R.string.mainwindow_requirepermission_floating_text),
-                            color = Color.Red
+                            color = colorResource(id = R.color.red_zhuhong)
                         )
                         checkPermissionPassed = true
                     }
@@ -161,7 +165,7 @@ class MainActivity : ComponentActivity() {
                                 icon = painterResource(id = R.drawable.icon_read_image),
                                 title = stringResource(R.string.mainwindow_requirepermission_readimage_title),
                                 text = stringResource(R.string.mainwindow_requirepermission_readimage_text),
-                                color = Color.Red
+                                color = colorResource(id = R.color.red_zhuhong)
                             )
                             checkPermissionPassed = true
                         }
@@ -176,7 +180,7 @@ class MainActivity : ComponentActivity() {
                                 icon = painterResource(id = R.drawable.icon_notification),
                                 title = stringResource(R.string.mainwindow_requirepermission_notification_title),
                                 text = stringResource(R.string.mainwindow_requirepermission_notification_text),
-                                color = Color.Red
+                                color = colorResource(id = R.color.red_zhuhong)
                             )
                             checkPermissionPassed = true
                         }
@@ -192,7 +196,7 @@ class MainActivity : ComponentActivity() {
                                 icon = painterResource(id = R.drawable.icon_file_access),
                                 title = stringResource(R.string.mainwindow_requirepermission_fileaccess_title),
                                 text = stringResource(R.string.mainwindow_requirepermission_fileaccess_text),
-                                color = Color.Red
+                                color = colorResource(id = R.color.red_zhuhong)
                             )
                             checkPermissionPassed = true
                         }
@@ -208,28 +212,41 @@ class MainActivity : ComponentActivity() {
                                 icon = painterResource(id = R.drawable.icon_mediastore_access),
                                 title = stringResource(R.string.mainwindow_requirepermission_mediastore_title),
                                 text = stringResource(R.string.mainwindow_requirepermission_mediastore_text),
-                                color = Color.Red
+                                color = colorResource(id = R.color.red_zhuhong)
                             )
                             checkPermissionPassed = true
                         }
                     }
+                    if(!(getSystemService(POWER_SERVICE) as PowerManager).isIgnoringBatteryOptimizations(packageName)){
+                        CreateCardButton(
+                            onClick = {
+                                startActivity(Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply{
+                                    data = Uri.parse("package:$packageName");
+                                })
+                            },
+                            icon = painterResource(id = R.drawable.icon_battery),
+                            title = stringResource(R.string.mainwindow_requirepermission_battery_title),
+                            text = stringResource(R.string.mainwindow_requirepermission_battery_text),
+                            color = colorResource(id = R.color.red_zhuhong)
+                        )
+                    }
                     if (checkPermissionPassed) {
                         onceShotTitle = "OnceShot 未启动"
                         onceShotText = "请先给与 OnceShot 全部的必须权限，然后退出重进"
-                        onceShotBackgroundColor = Color.Red
+                        onceShotBackgroundColor = colorResource(id = R.color.red_zhuhong)
                         //stopService(Intent(LocalContext.current, ForegroundService::class.java))
                     }
                     CreateCard(
                         icon = painterResource(id = R.drawable.icon_material_design),
                         title = stringResource(R.string.mainwindow_onceshot_compose_title),
                         text = stringResource(R.string.mainwindow_onceshot_compose_text),
-                        color = Color.Blue
+                        color = colorResource(id = R.color.blue_jiqing)
                     )
                     CreateCard(
-                        icon = painterResource(id = R.drawable.stackbricks_logo),
+                        icon = painterResource(id = R.drawable.onceshot_logo),
                         title = stringResource(R.string.mainwindow_onceshot_creation_title),
                         text = stringResource(R.string.mainwindow_onceshot_creation_text),
-                        color = Color.Blue
+                        color = colorResource(id = R.color.blue_jiqing)
                     )
                 }
             }
@@ -262,9 +279,9 @@ class MainActivity : ComponentActivity() {
                     horizontalAlignment = Alignment.Start,
                 ) {
                     Text("设置\"分享后删除\"操作在分享多久后删除截图", fontWeight = FontWeight.Bold)
-                    // getSharedPreferences(SPNAME, MODE_PRIVATE).getInt(SPKEY_DURATION, 30).toString()
-                    val text by remember {
-                        mutableStateOf(""
+                    //
+                    var text by remember {
+                        mutableStateOf(getSharedPreferences(SPNAME, MODE_PRIVATE).getInt(SPKEY_DURATION, 30).toString()
                         )
                     }
                     Row(
@@ -273,9 +290,11 @@ class MainActivity : ComponentActivity() {
                         modifier =Modifier.fillMaxWidth()
                     ) {
                         TextField(
-                            modifier=Modifier.width(160.dp),
+                            modifier=Modifier.width(130.dp),
                             value = text,
-                            onValueChange = {},
+                            onValueChange = {
+                                            text=it
+                            },
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
                         )
                         Button(onClick = {
@@ -436,7 +455,7 @@ fun GreetingPreview() {
                             icon = painterResource(id = R.drawable.icon_file_access),
                             title = stringResource(R.string.mainwindow_requirepermission_fileaccess_title),
                             text = stringResource(R.string.mainwindow_requirepermission_fileaccess_text),
-                            color = Color.Red
+                            color = colorResource(id = R.color.red_zhuhong)
                         )
                         CreateCardButton(
                             onClick = {
@@ -449,7 +468,7 @@ fun GreetingPreview() {
                             icon = painterResource(id = R.drawable.icon_mediastore_access),
                             title = stringResource(R.string.mainwindow_requirepermission_mediastore_title),
                             text = stringResource(R.string.mainwindow_requirepermission_mediastore_text),
-                            color = Color.Red
+                            color = colorResource(id = R.color.red_zhuhong)
                         )
                         CreateCardButton(
                             onClick = {
@@ -461,7 +480,7 @@ fun GreetingPreview() {
                             icon = painterResource(id = R.drawable.icon_read_image),
                             title = stringResource(R.string.mainwindow_requirepermission_readimage_title),
                             text = stringResource(R.string.mainwindow_requirepermission_readimage_text),
-                            color = Color.Red
+                            color = colorResource(id = R.color.red_zhuhong)
                         )
                         CreateCardButton(
                             onClick = {
@@ -470,12 +489,12 @@ fun GreetingPreview() {
                             icon = painterResource(id = R.drawable.icon_floating_window),
                             title = stringResource(R.string.mainwindow_requirepermission_floating_title),
                             text = stringResource(R.string.mainwindow_requirepermission_floating_text),
-                            color = Color.Red
+                            color = colorResource(id = R.color.red_zhuhong)
                         )
                         if (checkPermissionPassed) {
                             onceShotTitle = "OnceShot 未启动"
                             onceShotText = "请先给与 OnceShot 全部的必须权限，然后退出重进"
-                            onceShotBackgroundColor = Color.Red
+                            onceShotBackgroundColor = colorResource(id = R.color.red_zhuhong)
                             stopService(Intent(LocalContext.current, ForegroundService::class.java))
                         }
                         CreateCardButton(

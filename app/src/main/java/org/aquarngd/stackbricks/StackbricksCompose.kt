@@ -1,6 +1,8 @@
 package org.aquarngd.stackbricks
 
 import android.content.Context
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -15,12 +17,17 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.TextUnit
+import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.drawable.toBitmap
@@ -108,23 +115,55 @@ class StackbricksCompose(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(10.dp),
-            shape = RoundedCornerShape(36.dp)
+            shape = RoundedCornerShape(18.dp)
         ) {
-            Row {
-                Icon(
-                    ContextCompat.getDrawable(LocalContext.current, R.drawable.stackbricks_logo)!!
-                        .toBitmap().asImageBitmap(), "logo"
-                )
+            Column(
+                modifier = Modifier
+                    .padding(7.dp)
+                    .fillMaxWidth()
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Start,
+                    modifier = Modifier.padding(0.dp, 0.dp, 0.dp, 20.dp)
+                ) {
+                    val iconModifier = Modifier
+                        .padding(0.dp, 0.dp, 20.dp, 0.dp)
+                    Icon(
+                        painter = painterResource(R.drawable.stackbricks_logo),
+                        contentDescription = "",
+                        modifier = iconModifier,
+                        tint = Color.Unspecified
+                    )
+                    Text(
+                        tipsText, fontWeight = FontWeight.Bold, fontSize = TextUnit(
+                            16F,
+                            TextUnitType.Sp
+                        )
+                    )
+                }
                 Column {
-                    Text(tipsText, textAlign = TextAlign.Left)
+                    Text(
+                        "OnceShot 的更新服务由 Stackbricks-kt 提供 (@aquamarine5, @海蓝色的咕咕鸽)",
+                        fontSize = TextUnit(
+                            12F,
+                            TextUnitType.Sp
+                        ),
+                        modifier = Modifier.padding(0.dp, 0.dp, 0.dp, 5.dp)
+                    )
+                    Image(
+                        painter = painterResource(id = R.drawable.developedby_rngdcreation),
+                        "developedby_rngdcreation"
+                    )
                 }
             }
+
         }
     }
 }
 
 @Composable
-@Preview(showSystemUi = true)
+@Preview()
 fun preview() {
     StackbricksCompose(
         rememberCoroutineScope(),

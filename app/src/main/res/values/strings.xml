@@ -36,5 +36,7 @@
     <string name="mainwindow_requirepermission_fileaccess_title">需要所有文件控制权限</string>
     <string name="mainwindow_requirepermission_notification_title">需要通知权限</string>
     <string name="mainwindow_requirepermission_notification_text">在新版本的 Android 中，OnceShot 需要通知权限来创建前台服务</string>
+    <string name="mainwindow_requirepermission_battery_title">需要为应用忽略电池优化</string>
+    <string name="mainwindow_requirepermission_battery_text">OnceShot 需要在后台保持运行，故需要忽略电池优化操作</string>
 
 </resources>

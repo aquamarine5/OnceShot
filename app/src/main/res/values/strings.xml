@@ -6,4 +6,37 @@
     <string name="nof_screenshot_channel">捕捉到的截图事件</string>
     <string name="nof_button_sharedelete">分享后刪除</string>
     <string name="share_screenshot">分享截图</string>
+    <string name="btn_DeleteAfterShare">复制后删除</string>
+    <string name="FloatingDialog_DeleteAfterShare">Button</string>
+    <string name="FloatingDialog_OnceShot">OnceShot 操作面板</string>
+    <string name="FloatingDialog_Delete">直接删除</string>
+    <string name="stackbricks_tips_newversion">有最新版本</string>
+    <string name="stackbricks_tips_newest">当前已经是最新版本</string>
+    <string name="stackbricks_tips_checkupdate">点击检查更新</string>
+    <string name="stackbricks_tips_programerror">程序出现错误</string>
+    <string name="stackbricks_tips_networkerror">网络已断开</string>
+    <string name="stackbricks_tips_clickinstall">点击以安装新版本</string>
+    <string name="stackbricks_tips_downloading">下载中…</string>
+    <string name="stackbricks_tips_checking">检查更新中</string>
+    <string name="mainwindow_androidcompatibility_title">Android 版本兼容性检查</string>
+    <string name="mainwindow_androidcompatibility_lowlevel_text">OnceShot 目前仅测试了 Android 33 (Tiramisu) 及以上版本的正确使用，其他版本可能会出现问题，您的手机Android版本为%1$s，低于设计版本</string>
+    <string name="mainwindow_androidcompatibility_success_text">您的手机 Android 版本为 %1$s，可以正常使用</string>
+    <string name="mainwindow_requirepermission_floating_text">OnceShot 需要添加悬浮窗让用户在截图后在操作面板进行操作</string>
+    <string name="mainwindow_requirepermission_floating_title">需要悬浮窗权限</string>
+    <string name="mainwindow_requirepermission_readimage_title">需要读取设备内图片权限</string>
+    <string name="mainwindow_requirepermission_readimage_text">OnceShot 需要通过读取设备图片来监听截图操作来显示操作面板</string>
+    <string name="mainwindow_requirepermission_mediastore_title">需要媒体库管理权限</string>
+    <string name="mainwindow_requirepermission_mediastore_text">OnceShot 通过对媒体库 (MediaStore) 的控制权限来删除截图文件</string>
+    <string name="mainwindow_onceshot_creation_title">OnceShot 由 Renegade Creation 开发</string>
+    <string name="mainwindow_onceshot_creation_text">作者：@aquamarine5 (@海蓝色的咕咕鸽)</string>
+    <string name="mainwindow_onceshot_compose_title">OnceShot 使用推荐用于构建原生 Android 界面的新工具包 Jetpack Compose 开发</string>
+    <string name="mainwindow_onceshot_compose_text">OnceShot 遵循 Material Design 3 设计理念</string>
+    <string name="floatingdialog_btn_close">关闭</string>
+    <string name="mainwindow_requirepermission_fileaccess_text">OnceShot 需要所有文件控制权限来删除截图</string>
+    <string name="mainwindow_requirepermission_fileaccess_title">需要所有文件控制权限</string>
+    <string name="mainwindow_requirepermission_notification_title">需要通知权限</string>
+    <string name="mainwindow_requirepermission_notification_text">在新版本的 Android 中，OnceShot 需要通知权限来创建前台服务</string>
+    <string name="mainwindow_requirepermission_battery_title">需要为应用忽略电池优化</string>
+    <string name="mainwindow_requirepermission_battery_text">OnceShot 需要在后台保持运行，故需要忽略电池优化操作</string>
+
 </resources>

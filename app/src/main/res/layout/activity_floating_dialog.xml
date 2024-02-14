@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:background="@drawable/floatingdialog_background"
+    android:orientation="vertical"
+    android:theme="@style/Theme.MaterialComponents.DayNight.NoActionBar"
+    tools:context=".FloatingDialog">
+
+    <com.google.android.material.textview.MaterialTextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/white"
+        android:text="@string/FloatingDialog_OnceShot"
+        android:textAlignment="center"
+        app:errorTextAppearance="@style/Theme.MaterialComponents.Light.NoActionBar" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btn_delete_after_share"
+        style="@style/Widget.Material3.Button.OutlinedButton"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:text="@string/FloatingDialog_DeleteAfterShare"
+        android:textColor="#000000"
+        android:textSize="14sp"
+        app:strokeColor="@color/teal_700" />
+
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btn_delete_directly"
+        style="@style/Widget.Material3.Button.OutlinedButton"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:text="@string/FloatingDialog_Delete"
+        android:textColor="#000000"
+        android:textSize="14sp"
+        app:strokeColor="@color/teal_700" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btn_close"
+        style="@style/Widget.Material3.Button.OutlinedButton"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:text="@string/floatingdialog_btn_close"
+        android:textColor="#000000"
+        android:textSize="14sp"
+        app:strokeColor="@color/teal_700" />
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <LinearLayout
+            android:id="@+id/share_layout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+        </LinearLayout>
+    </ScrollView>
+</LinearLayout>

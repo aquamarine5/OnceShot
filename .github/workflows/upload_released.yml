@@ -29,7 +29,7 @@ jobs:
     - name: Show file tree
       run: |
         sudo apt-get install tree
-        tree -x
+        tree
     - name: Upload apk file
       run: gh release upload ${{steps.version.outputs.VERSION}} app/build/outputs/apk/releases/app-release-unsigned.apk
       env:

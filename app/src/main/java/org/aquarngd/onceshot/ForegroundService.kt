@@ -47,7 +47,6 @@ class ForegroundService : Service() {
     var isLive = false
     var relativePath: String? = null
     var uri: Uri? = null
-    var contentView: View? = null
 
     override fun onBind(intent: Intent?): IBinder? {
         return null
@@ -61,8 +60,6 @@ class ForegroundService : Service() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         Log.i(classTag, "Received intent: " + intent?.getIntExtra(intent_type_id, INTENT_DEFAULT))
-        if (intent != null) when (intent.getIntExtra(intent_type_id, INTENT_DEFAULT)) {
-        }
         if (!isLive) {
             isLive = true
             startFileObserver()
@@ -149,7 +146,6 @@ class ForegroundService : Service() {
                 putExtra(intent_type_id, INTENT_SHOW_FLOATINGWINDOW)
                 putExtra(intent_uri_id, it)
             })
-            sendNotification(it)
             Log.d(classTag, "Call screenShotListenManager, uri:$uri")
         }
         screenShotListenManager!!.startListen()

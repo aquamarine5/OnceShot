@@ -1,5 +1,7 @@
 package org.aquarngd.onceshot
 
+import android.animation.Animator
+import android.animation.AnimatorListenerAdapter
 import android.app.Service
 import android.content.ContentUris
 import android.content.Context
@@ -12,9 +14,14 @@ import android.provider.MediaStore
 import android.util.Log
 import android.view.Gravity
 import android.view.LayoutInflater
+import android.view.MotionEvent
 import android.view.View
+import android.view.View.OnTouchListener
 import android.view.WindowManager
+import android.widget.LinearLayout
 import com.google.android.material.button.MaterialButton
+import kotlin.math.abs
+
 
 class FloatingDialogService : Service() {
     companion object {
@@ -89,7 +96,7 @@ class FloatingDialogService : Service() {
             return
         }
         val result = contentResolver.delete(uri!!, null, null)
-        Log.d(classTag, "Delete image result:${{ result == 1 }.toString()}")
+        Log.d(classTag, "Delete image result:${{ result == 1 }}")
     }
 
     private fun shareImage() {
@@ -98,14 +105,14 @@ class FloatingDialogService : Service() {
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                 putExtra(Intent.EXTRA_STREAM, uri)
                 type = "image/*"
-            }, "j").apply {
+            }, "Share screenshot").apply {
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             })
     }
 
-    private fun onClickShareDeleteButton() {
+    private fun onClickShareDeleteButton(contentView: View) {
         shareImage()
-        closeFloatingWindow()
+        fadeOut(contentView)
         Handler().postDelayed({
             deleteImage()
         }, getDuration()*1000L)
@@ -129,24 +136,101 @@ class FloatingDialogService : Service() {
                     or WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE)
         }
         contentView = LayoutInflater.from(this).inflate(R.layout.activity_floating_dialog, null)
-        windowManager.addView(contentView, windowParams)
         contentView!!.apply {
             val btnDeleteDirectly = findViewById<MaterialButton>(R.id.btn_delete_directly)
             val btnDeleteShare = findViewById<MaterialButton>(R.id.btn_delete_after_share)
             val btnClose = findViewById<MaterialButton>(R.id.btn_close)
+            var lastTouchAction=-1
+            var downX=0f
+            var downY=0f
+            var xNewSize=0f
+            var yNewSize=0f
             btnClose?.setOnClickListener {
-                closeFloatingWindow()
+                fadeOut(this)
             }
             btnDeleteDirectly?.setOnClickListener {
                 Log.d(classTag, "Call INTENT_DELETE_DIRECTLY")
                 deleteImage()
-                closeFloatingWindow()
+                fadeOut(this)
             }
             btnDeleteShare?.setOnClickListener {
                 Log.d(classTag, "Call INTENT_SHARE_DELETE")
-                onClickShareDeleteButton()
+                onClickShareDeleteButton(this)
+            }
+            fadeIn(this)
+            setOnTouchListener(OnTouchListener { view, event ->
+                when (event.action) {
+                    MotionEvent.ACTION_DOWN -> {
+                        lastTouchAction = MotionEvent.ACTION_DOWN //设置状态为按下
+
+                        //判断是不第一次按下,不然的话每重新滑动都会回到起点
+                        //0这个值应该跟随你的初始位置变化
+                        if (downX == 0f && downY == 0f) {
+                            downX = event.rawX
+                            downY = event.rawY
+                        }
+                        xNewSize = event.rawX
+                        yNewSize = event.rawY
+                        return@OnTouchListener true
+                    }
+
+                    MotionEvent.ACTION_MOVE -> {
+                        //当X轴或Y轴的滑动大于10时再,判定为滑动,正好点击事件也需要这个
+                        if (abs(event.rawX - xNewSize) > 5){
+                            lastTouchAction = MotionEvent.ACTION_MOVE //设置状态为滑动
+
+                            //这里给定滑动的位置
+                            layoutParams.width = (xNewSize - downX).toInt()
+
+                            //记录下最新一个点的位置
+                            xNewSize = event.rawX
+                            yNewSize = event.rawY
+                            windowManager.updateViewLayout(view, layoutParams)
+                        }
+                        return@OnTouchListener false
+                    }
+
+                    MotionEvent.ACTION_UP -> {
+                        if (lastTouchAction == MotionEvent.ACTION_DOWN) { //如果触发了滑动就不是点击事件
+                            view.performClick()
+                        }else{
+                            if (abs(event.rawX - xNewSize) > 15){
+                                fadeOut(view)
+                            }
+                            else{
+                                view.animate().apply {
+                                    x(20f)
+                                    duration= 500
+                                }
+                            }
+                        }
+                        return@OnTouchListener false
+                    }
+                }
+                false
+            })
+        }
+        windowManager.addView(contentView, windowParams)
+        Log.d(classTag, "Create FloatingDialog successfully.")
+    }
+    private fun fadeIn(contentView: View){
+        contentView.apply {
+            findViewById<LinearLayout>(R.id.linear_layout)!!.animate()
+                .alpha(1f).duration = 1000
+        }
+    }
+    private fun fadeOut(contentView: View){
+        contentView.apply {
+            findViewById<LinearLayout>(R.id.linear_layout)!!.animate().apply{
+                alpha(0f)
+                duration=1000
+                setListener(object : AnimatorListenerAdapter() {
+                    override fun onAnimationEnd(animation: Animator) {
+                        super.onAnimationEnd(animation)
+                        closeFloatingWindow()
+                    }
+                })
             }
         }
-        Log.d(classTag, "Create FloatingDialog successfully.")
     }
 }

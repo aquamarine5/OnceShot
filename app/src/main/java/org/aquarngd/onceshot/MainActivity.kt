@@ -25,6 +25,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CutCornerShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
@@ -51,6 +52,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -111,7 +113,7 @@ class MainActivity : ComponentActivity() {
                     CreateCard(
                         icon = painterResource(id = R.drawable.icon_test),
                         title = "OnceShot 仍在测试当中",
-                        text = "Build version: 第 97 次测试",
+                        text = "Build version: 第 103 次测试",
                         color = Color.Yellow
                     )
                     StackbricksCompose(
@@ -130,15 +132,6 @@ class MainActivity : ComponentActivity() {
                             color = Color.Yellow
                         )
                     } else {
-                        CreateCard(
-                            icon = painterResource(id = R.drawable.icon_android),
-                            title = stringResource(R.string.mainwindow_androidcompatibility_title),
-                            text = stringResource(
-                                R.string.mainwindow_androidcompatibility_success_text,
-                                Build.VERSION.SDK_INT
-                            ),
-                            color = Color.Green
-                        )
                     }
 
                     if (!Settings.canDrawOverlays(this@MainActivity)) {
@@ -252,7 +245,56 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
+    @Composable
+    fun drawDebugVersionCard(){
+        Card(
+            shape = RoundedCornerShape(18.dp),
+            colors = CardDefaults.cardColors(Color.Yellow),
 
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(10.dp)
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Start,
+                modifier = Modifier
+                    .padding(22.dp, 15.dp)
+                    .fillMaxWidth()
+            ) {
+                val iconModifier = Modifier
+                    .padding(10.dp, 0.dp, 20.dp, 0.dp)
+                //.size(35.dp)
+                Icon(
+                    painter = painterResource(id = R.drawable.icon_test),
+                    contentDescription = "",
+                    modifier = iconModifier,
+                    tint = Color.Unspecified
+                )
+                Column(
+                    horizontalAlignment = Alignment.Start,
+                ) {
+                    Text("OnceShot 仍在测试当中", fontWeight = FontWeight.Bold)
+                    Row(
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically
+                    ){
+                        Card(
+
+                            shape = CutCornerShape(0.dp),colors = CardDefaults.cardColors(colorResource(id = R.color.blue_jiqing))){
+
+                            Text("v1.2 Reanimated",
+                                style= TextStyle(color = Color.Yellow),modifier = Modifier.padding(5.dp,2.dp),
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                        Text(" Build version: 3")
+                    }
+                    Text("Build version: 第 103 次测试")
+                }
+            }
+        }
+    }
     @Composable
     fun drawDurationSettingCard() {
         Card(
@@ -281,7 +323,7 @@ class MainActivity : ComponentActivity() {
                     Text("设置\"分享后删除\"操作在分享多久后删除截图", fontWeight = FontWeight.Bold)
                     //
                     var text by remember {
-                        mutableStateOf(getSharedPreferences(SPNAME, MODE_PRIVATE).getInt(SPKEY_DURATION, 30).toString()
+                        mutableStateOf("30"
                         )
                     }
                     Row(
@@ -419,7 +461,7 @@ fun GreetingPreview() {
                     a.apply {
                         var onceShotTitle by mutableStateOf("OnceShot 服务已经启动")
                         var onceShotText by mutableStateOf("点击停止")
-                        var onceShotBackgroundColor by mutableStateOf(Color.Green)
+                        var onceShotBackgroundColor by mutableStateOf(colorResource(id = R.color.teal_200))
                         val checkPermissionPassed = false
                         CreateCard(
                             icon = painterResource(id = R.drawable.icon_service_start),
@@ -427,25 +469,12 @@ fun GreetingPreview() {
                             text = onceShotText,
                             color = onceShotBackgroundColor
                         )
+                        drawDebugVersionCard()
+                        StackbricksCompose(
+                            rememberCoroutineScope(),
+                            LocalContext.current, WeiboCommentsMsgPvder.MsgPvderID, "5001248562483153"
+                        ).DrawCompose()
                         drawDurationSettingCard()
-                        CreateCard(
-                            icon = painterResource(id = R.drawable.icon_android),
-                            title = stringResource(R.string.mainwindow_androidcompatibility_title),
-                            text = stringResource(
-                                R.string.mainwindow_androidcompatibility_lowlevel_text,
-                                Build.VERSION.SDK_INT
-                            ),
-                            color = Color.Yellow
-                        )
-                        CreateCard(
-                            icon = painterResource(id = R.drawable.icon_android),
-                            title = stringResource(R.string.mainwindow_androidcompatibility_title),
-                            text = stringResource(
-                                R.string.mainwindow_androidcompatibility_success_text,
-                                Build.VERSION.SDK_INT
-                            ),
-                            color = Color.Green
-                        )
                         CreateCardButton(
                             onClick = {
                                 startActivity(Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION).apply {
@@ -456,6 +485,18 @@ fun GreetingPreview() {
                             title = stringResource(R.string.mainwindow_requirepermission_fileaccess_title),
                             text = stringResource(R.string.mainwindow_requirepermission_fileaccess_text),
                             color = colorResource(id = R.color.red_zhuhong)
+                        )
+                        CreateCard(
+                            icon = painterResource(id = R.drawable.icon_material_design),
+                            title = stringResource(R.string.mainwindow_onceshot_compose_title),
+                            text = stringResource(R.string.mainwindow_onceshot_compose_text),
+                            color = colorResource(id = R.color.blue_jiqing)
+                        )
+                        CreateCard(
+                            icon = painterResource(id = R.drawable.onceshot_logo),
+                            title = stringResource(R.string.mainwindow_onceshot_creation_title),
+                            text = stringResource(R.string.mainwindow_onceshot_creation_text),
+                            color = colorResource(id = R.color.blue_jiqing)
                         )
                         CreateCardButton(
                             onClick = {

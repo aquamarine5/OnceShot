@@ -36,7 +36,7 @@ import kotlinx.coroutines.launch
 import org.aquarngd.onceshot.R
 
 class StackbricksCompose(
-    val coroutineScope: CoroutineScope,
+    private val coroutineScope: CoroutineScope,
     val context: Context,
     msgPvderId: String,
     msgPvderData: String

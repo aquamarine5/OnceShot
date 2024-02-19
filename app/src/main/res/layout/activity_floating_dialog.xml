@@ -7,6 +7,8 @@
     android:background="@drawable/floatingdialog_background"
     android:orientation="vertical"
     android:theme="@style/Theme.MaterialComponents.DayNight.NoActionBar"
+    android:id="@+id/linear_layout"
+    android:alpha="0f"
     tools:context=".FloatingDialog">
 
     <com.google.android.material.textview.MaterialTextView

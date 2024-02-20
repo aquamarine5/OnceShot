@@ -8,7 +8,7 @@ import kotlinx.coroutines.withContext
 import okhttp3.Request
 import org.json.JSONObject
 
-class WeiboCommentsMsgPvder() : IMsgPvder {
+class WeiboCommentsMsgPvder : IMsgPvder {
     override val ID: String
         get() = MsgPvderID
 

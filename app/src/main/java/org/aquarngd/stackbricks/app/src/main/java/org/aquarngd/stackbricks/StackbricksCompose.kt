@@ -33,7 +33,6 @@ import androidx.core.content.ContextCompat
 import androidx.core.graphics.drawable.toBitmap
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
-import org.aquarngd.onceshot.R
 
 class StackbricksCompose(
     private val coroutineScope: CoroutineScope,

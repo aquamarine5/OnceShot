@@ -1,0 +1,3 @@
+[submodule "app/src/main/java/org/aquarngd/stackbricks"]
+	path = app/src/main/java/org/aquarngd/stackbricks
+	url = https://github.com/aquamarine5/Stackbricks-kt.git

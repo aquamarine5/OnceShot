@@ -142,9 +142,7 @@ class FloatingDialogService : Service() {
             val btnClose = findViewById<MaterialButton>(R.id.btn_close)
             var lastTouchAction=-1
             var downX=0f
-            var downY=0f
             var xNewSize=0f
-            var yNewSize=0f
             btnClose?.setOnClickListener {
                 fadeOut(this)
             }
@@ -161,30 +159,28 @@ class FloatingDialogService : Service() {
             setOnTouchListener(OnTouchListener { view, event ->
                 when (event.action) {
                     MotionEvent.ACTION_DOWN -> {
-                        lastTouchAction = MotionEvent.ACTION_DOWN //设置状态为按下
-
-                        //判断是不第一次按下,不然的话每重新滑动都会回到起点
-                        //0这个值应该跟随你的初始位置变化
-                        if (downX == 0f && downY == 0f) {
+                        lastTouchAction = MotionEvent.ACTION_DOWN
+                        if (downX == 0f) {
                             downX = event.rawX
-                            downY = event.rawY
                         }
                         xNewSize = event.rawX
-                        yNewSize = event.rawY
                         return@OnTouchListener true
                     }
 
                     MotionEvent.ACTION_MOVE -> {
-                        //当X轴或Y轴的滑动大于10时再,判定为滑动,正好点击事件也需要这个
                         if (abs(event.rawX - xNewSize) > 5){
-                            lastTouchAction = MotionEvent.ACTION_MOVE //设置状态为滑动
-
+                            lastTouchAction = MotionEvent.ACTION_MOVE
+                            if (abs(event.rawX - xNewSize) > 15){
+                                fadeOut(view)
+                                return@OnTouchListener false
+                            }
                             //这里给定滑动的位置
-                            layoutParams.width = (xNewSize - downX).toInt()
-
+                            val moveX = xNewSize - downX
+                            if(moveX<=20){
+                                view.x=moveX
+                            }
                             //记录下最新一个点的位置
                             xNewSize = event.rawX
-                            yNewSize = event.rawY
                             windowManager.updateViewLayout(view, layoutParams)
                         }
                         return@OnTouchListener false
@@ -200,7 +196,7 @@ class FloatingDialogService : Service() {
                             else{
                                 view.animate().apply {
                                     x(20f)
-                                    duration= 500
+                                    duration= 200
                                 }
                             }
                         }
@@ -216,14 +212,14 @@ class FloatingDialogService : Service() {
     private fun fadeIn(contentView: View){
         contentView.apply {
             findViewById<LinearLayout>(R.id.linear_layout)!!.animate()
-                .alpha(1f).duration = 1000
+                .alpha(1f).duration = 500
         }
     }
     private fun fadeOut(contentView: View){
         contentView.apply {
             findViewById<LinearLayout>(R.id.linear_layout)!!.animate().apply{
                 alpha(0f)
-                duration=1000
+                duration=500
                 setListener(object : AnimatorListenerAdapter() {
                     override fun onAnimationEnd(animation: Animator) {
                         super.onAnimationEnd(animation)

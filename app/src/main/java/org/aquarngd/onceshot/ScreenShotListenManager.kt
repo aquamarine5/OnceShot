@@ -59,18 +59,16 @@ class ScreenShotListenManager private constructor(context: Context?) {
             // 获取各列的索引
             val dataIndex = cursor.getColumnIndex(MediaStore.Images.ImageColumns.DATA)
             val dateTakenIndex = cursor.getColumnIndex(MediaStore.Images.ImageColumns.DATE_TAKEN)
-            var widthIndex = -1
-            var heightIndex = -1
-            widthIndex = cursor.getColumnIndex(MediaStore.Images.ImageColumns.WIDTH)
-            heightIndex = cursor.getColumnIndex(MediaStore.Images.ImageColumns.HEIGHT)
+            val widthIndex: Int = cursor.getColumnIndex(MediaStore.Images.ImageColumns.WIDTH)
+            val heightIndex: Int = cursor.getColumnIndex(MediaStore.Images.ImageColumns.HEIGHT)
             val idIndex = cursor.getColumnIndex(MediaStore.Images.ImageColumns._ID)
             val idData = cursor.getLong(idIndex)
 
             // 获取行数据
             val data = cursor.getString(dataIndex)
             val dateTaken = cursor.getLong(dateTakenIndex)
-            var width = 0
-            var height = 0
+            val width: Int
+            val height: Int
             if (widthIndex >= 0 && heightIndex >= 0) {
                 width = cursor.getInt(widthIndex)
                 height = cursor.getInt(heightIndex)
@@ -307,7 +305,7 @@ class ScreenShotListenManager private constructor(context: Context?) {
         }
     }
 
-    private val realScreenSize: Point?
+    private val realScreenSize: Point
         /**
          * 获取屏幕分辨率
          */
@@ -356,7 +354,7 @@ class ScreenShotListenManager private constructor(context: Context?) {
         private val KEYWORDS = arrayOf(
             "screenshot", "screen_shot", "screen-shot", "screen shot",
             "screencapture", "screen_capture", "screen-capture", "screen capture",
-            "screencap", "screen_cap", "screen-cap", "screen cap"
+            "screencap", "screen_cap", "screen-cap", "screen cap","MuMu12"
         )
 
         /**

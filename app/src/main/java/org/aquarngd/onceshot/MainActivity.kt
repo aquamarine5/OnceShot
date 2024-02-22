@@ -60,7 +60,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import org.aquarngd.onceshot.ui.theme.OnceShotTheme
 import org.aquarngd.stackbricks.StackbricksCompose
-import org.aquarngd.stackbricks.WeiboCommentsMsgPvder
+import org.aquarngd.stackbricks.msgpvder.WeiboCommentsMsgPvder
 
 class MainActivity : ComponentActivity() {
 

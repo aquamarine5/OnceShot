@@ -6,6 +6,7 @@ import android.app.Service
 import android.content.ContentUris
 import android.content.Context
 import android.content.Intent
+import android.graphics.PixelFormat
 import android.net.Uri
 import android.os.Build
 import android.os.Handler
@@ -18,7 +19,9 @@ import android.view.MotionEvent
 import android.view.View
 import android.view.View.OnTouchListener
 import android.view.WindowManager
+import android.view.animation.DecelerateInterpolator
 import android.widget.LinearLayout
+import androidx.core.animation.DecelerateInterpolator
 import com.google.android.material.button.MaterialButton
 import kotlin.math.abs
 
@@ -96,7 +99,7 @@ class FloatingDialogService : Service() {
             return
         }
         val result = contentResolver.delete(uri!!, null, null)
-        Log.d(classTag, "Delete image result:${{ result == 1 }}")
+        Log.d(classTag, "Delete image result:${{ result == 1 }.toString()}")
     }
 
     private fun shareImage() {
@@ -112,6 +115,7 @@ class FloatingDialogService : Service() {
 
     private fun onClickShareDeleteButton(contentView: View) {
         shareImage()
+
         fadeOut(contentView)
         Handler().postDelayed({
             deleteImage()
@@ -124,7 +128,7 @@ class FloatingDialogService : Service() {
         val windowManager = getSystemService(Context.WINDOW_SERVICE) as WindowManager
         val windowParams = WindowManager.LayoutParams().apply {
             gravity = Gravity.START or Gravity.TOP
-            x = 20
+            x = -100
             y = 100
             type = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
                 WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
@@ -134,6 +138,7 @@ class FloatingDialogService : Service() {
             height = WindowManager.LayoutParams.WRAP_CONTENT
             flags = (WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL
                     or WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE)
+            format=PixelFormat.TRANSPARENT
         }
         contentView = LayoutInflater.from(this).inflate(R.layout.activity_floating_dialog, null)
         contentView!!.apply {
@@ -164,22 +169,20 @@ class FloatingDialogService : Service() {
                             downX = event.rawX
                         }
                         xNewSize = event.rawX
-                        return@OnTouchListener true
+                        return@OnTouchListener false
                     }
 
                     MotionEvent.ACTION_MOVE -> {
                         if (abs(event.rawX - xNewSize) > 5){
                             lastTouchAction = MotionEvent.ACTION_MOVE
+                            /*
                             if (abs(event.rawX - xNewSize) > 15){
                                 fadeOut(view)
                                 return@OnTouchListener false
-                            }
+                            }*/
                             //这里给定滑动的位置
                             val moveX = xNewSize - downX
-                            if(moveX<=20){
-                                view.x=moveX
-                            }
-                            //记录下最新一个点的位置
+                            view.x=moveX
                             xNewSize = event.rawX
                             windowManager.updateViewLayout(view, layoutParams)
                         }
@@ -196,6 +199,7 @@ class FloatingDialogService : Service() {
                             else{
                                 view.animate().apply {
                                     x(20f)
+                                    setInterpolator(DecelerateInterpolator())
                                     duration= 200
                                 }
                             }
@@ -212,18 +216,23 @@ class FloatingDialogService : Service() {
     private fun fadeIn(contentView: View){
         contentView.apply {
             findViewById<LinearLayout>(R.id.linear_layout)!!.animate()
-                .alpha(1f).duration = 500
+                .alpha(1f)
+                .x(20f)
+                .setInterpolator(DecelerateInterpolator())
+                .duration = 200
         }
     }
     private fun fadeOut(contentView: View){
         contentView.apply {
             findViewById<LinearLayout>(R.id.linear_layout)!!.animate().apply{
                 alpha(0f)
-                duration=500
+                x(-150f)
+                setInterpolator(DecelerateInterpolator())
+                duration=200
                 setListener(object : AnimatorListenerAdapter() {
                     override fun onAnimationEnd(animation: Animator) {
-                        super.onAnimationEnd(animation)
                         closeFloatingWindow()
+                        super.onAnimationEnd(animation)
                     }
                 })
             }

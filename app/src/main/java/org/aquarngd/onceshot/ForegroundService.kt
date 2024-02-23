@@ -1,5 +1,6 @@
 package org.aquarngd.onceshot
 
+import android.app.ActivityManager
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.Service
@@ -130,7 +131,13 @@ class ForegroundService : Service() {
             btnDeleteShare.visibility = View.GONE
         }
     }
-
+    private fun callFloatingDialogService(id:Long){
+        startService(Intent().apply {
+            setClass(applicationContext, FloatingDialogService::class.java)
+            putExtra(intent_type_id, INTENT_SHOW_FLOATINGWINDOW)
+            putExtra(intent_uri_id, id)
+        })
+    }
     private fun startFileObserver() {
         screenShotListenManager!!.setListener {
             relativePath = ContentUris.withAppendedId(
@@ -141,11 +148,7 @@ class ForegroundService : Service() {
                 MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
                 it
             )
-            startService(Intent().apply {
-                setClass(applicationContext, FloatingDialogService::class.java)
-                putExtra(intent_type_id, INTENT_SHOW_FLOATINGWINDOW)
-                putExtra(intent_uri_id, it)
-            })
+            callFloatingDialogService(it)
             Log.d(classTag, "Call screenShotListenManager, uri:$uri")
         }
         screenShotListenManager!!.startListen()

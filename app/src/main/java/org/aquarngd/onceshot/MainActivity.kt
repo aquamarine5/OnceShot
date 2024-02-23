@@ -13,6 +13,7 @@ import android.os.PowerManager
 import android.provider.MediaStore
 import android.provider.Settings
 import android.util.Log
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Arrangement
@@ -317,7 +318,8 @@ class MainActivity : ComponentActivity() {
                     Text("设置\"分享后删除\"操作在分享多久后删除截图", fontWeight = FontWeight.Bold)
                     //
                     var text by remember {
-                        mutableStateOf("30"
+                        mutableStateOf(getSharedPreferences(SPNAME, MODE_PRIVATE).getInt(
+                            SPKEY_DURATION,30).toString()
                         )
                     }
                     Row(
@@ -326,8 +328,8 @@ class MainActivity : ComponentActivity() {
                         modifier =Modifier.fillMaxWidth()
                     ) {
                         TextField(
-                            modifier=Modifier.width(130.dp),
                             value = text,
+                            modifier=Modifier.width(130.dp),
                             onValueChange = {
                                             text=it
                             },
@@ -338,6 +340,7 @@ class MainActivity : ComponentActivity() {
                                 getSharedPreferences(SPNAME, MODE_PRIVATE).edit()
                             sharedPreferences.putInt(SPKEY_DURATION, text.toInt())
                             sharedPreferences.apply()
+                            Toast.makeText(applicationContext,"保存成功",Toast.LENGTH_SHORT).show()
                         }) {
                             Text("保存")
                         }

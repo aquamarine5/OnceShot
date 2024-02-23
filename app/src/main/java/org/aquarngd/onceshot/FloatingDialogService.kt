@@ -12,6 +12,7 @@ import android.net.Uri
 import android.os.Build
 import android.os.Handler
 import android.os.IBinder
+import android.os.Looper
 import android.provider.MediaStore
 import android.util.Log
 import android.view.Gravity
@@ -116,7 +117,7 @@ class FloatingDialogService : Service() {
         shareImage()
 
         fadeOut(contentView)
-        Handler().postDelayed({
+        Handler(Looper.getMainLooper()).postDelayed({
             deleteImage()
         }, getDuration()*1000L)
     }
@@ -176,7 +177,7 @@ class FloatingDialogService : Service() {
                         y=nowY
                         lp.x+=movedX.toInt()
                         lp.y+=movedY.toInt()
-                        windowManager.updateViewLayout(contentView!!, lp)
+                        windowManager.updateViewLayout(this, lp)
                         return@OnTouchListener false
                     }
 
@@ -185,14 +186,21 @@ class FloatingDialogService : Service() {
                             view.performClick()
                         }else{
                             if ((event.rawX - 20) < -20){
-                                fadeOutSlided(contentView!!)
-                                windowManager.updateViewLayout(contentView!!, lp)
-                                return@OnTouchListener false
+                                fadeOutSlided(this)
+                                windowManager.updateViewLayout(this, lp)
+                                return@OnTouchListener true
                             }
                             else{
-                                animSlide(view,lp.x,20,500)
-                                windowManager.updateViewLayout(contentView!!, lp)
+                                val limitDistance=(resources.displayMetrics.widthPixels-this.width)/2
+                                if(this.x<limitDistance){
+                                    animSlide(view,lp.x,0,(500*(this.left+20)/(limitDistance+20)).toInt())
+                                }else{
+
+                                    animSlide(view,lp.x,resources.displayMetrics.widthPixels-20-this.width,(500*(resources.displayMetrics.widthPixels-this.right)/limitDistance).toInt())
+                                }
+                                windowManager.updateViewLayout(this, lp)
                             }
+                            return@OnTouchListener true
                         }
                         return@OnTouchListener false
                     }
@@ -221,21 +229,17 @@ class FloatingDialogService : Service() {
             fadeIn(this)
         }
         windowManager.addView(contentView, windowParams)
+        Handler(Looper.getMainLooper()).postDelayed({
+            fadeOut(contentView!!)
+        }, 30*1000L)
         Log.d(classTag, "Create FloatingDialog successfully.")
     }
     private fun fadeIn(view: View){
-        val windowManager = getSystemService(Context.WINDOW_SERVICE) as WindowManager
         view.apply {
             animate()
                 .alpha(1f)
                 .x(0f)
                 .setInterpolator(DecelerateInterpolator())
-                .setListener(object : AnimatorListenerAdapter() {
-                    override fun onAnimationEnd(animation: Animator) {
-                        //windowManager.updateViewLayout(contentView, layoutParams)
-                        super.onAnimationEnd(animation)
-                    }
-                })
                 .duration = 200
         }
     }

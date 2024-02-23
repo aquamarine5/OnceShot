@@ -64,7 +64,7 @@ import org.aquarngd.stackbricks.StackbricksCompose
 import org.aquarngd.stackbricks.msgpvder.WeiboCommentsMsgPvder
 
 class MainActivity : ComponentActivity() {
-
+    var status=ForegroundServiceStatus.STATUS_INIT
     companion object {
         const val REQUEST_PERMISSION_NOF = 1001
         const val REQUEST_PERMISSION_IMAGE = 1002
@@ -75,14 +75,6 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        Intent(this, ForegroundService::class.java).apply {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                Log.d(classTag, "Call startForegroundService")
-                startForegroundService(this)
-            } else {
-                startService(this)
-            }
-        }
         setContent {
             drawMainContent()
         }
@@ -91,9 +83,10 @@ class MainActivity : ComponentActivity() {
     @SuppressLint("BatteryLife")
     @Composable
     fun drawMainContent() {
-        var onceShotTitle by mutableStateOf("OnceShot 服务已经启动")
-        var onceShotText by mutableStateOf("点击停止")
-        var onceShotBackgroundColor by mutableStateOf(Color(getColor(R.color.teal_200)))
+        var onceshotIcon by remember{mutableStateOf(R.drawable.icon_service_start)}
+        var onceShotTitle by remember{mutableStateOf("OnceShot 服务已经启动")}
+        var onceShotText by remember{mutableStateOf("点击停止")}
+        var onceShotBackgroundColor by remember{mutableStateOf(Color(getColor(R.color.teal_200)))}
         var checkPermissionPassed = false
         OnceShotTheme {
             // A surface container using the 'background' color from the theme
@@ -104,12 +97,14 @@ class MainActivity : ComponentActivity() {
                 Column(
                     modifier = Modifier.verticalScroll(rememberScrollState())
                 ) {
-                    CreateCard(
-                        icon = painterResource(id = R.drawable.icon_service_start),
+                    CreateCardButton(
+                        icon = painterResource(id = onceshotIcon),
                         title = onceShotTitle,
                         text = onceShotText,
                         color = onceShotBackgroundColor
-                    )
+                    ){
+
+                    }
                     drawDebugVersionCard()
                     StackbricksCompose(
                         rememberCoroutineScope(),
@@ -218,12 +213,6 @@ class MainActivity : ComponentActivity() {
                             color = colorResource(id = R.color.red_zhuhong)
                         )
                     }
-                    if (checkPermissionPassed) {
-                        onceShotTitle = "OnceShot 未启动"
-                        onceShotText = "请先给与 OnceShot 全部的必须权限，然后退出重进"
-                        onceShotBackgroundColor = colorResource(id = R.color.red_zhuhong)
-                        //stopService(Intent(LocalContext.current, ForegroundService::class.java))
-                    }
                     CreateCard(
                         icon = painterResource(id = R.drawable.icon_material_design),
                         title = stringResource(R.string.mainwindow_onceshot_compose_title),
@@ -236,6 +225,20 @@ class MainActivity : ComponentActivity() {
                         text = stringResource(R.string.mainwindow_onceshot_creation_text),
                         color = colorResource(id = R.color.blue_jiqing)
                     )
+                }
+            }
+        }
+        if (checkPermissionPassed) {
+            onceShotTitle = "OnceShot 未启动"
+            onceShotText = "请先给与 OnceShot 全部的必须权限，然后退出重进"
+            onceShotBackgroundColor = colorResource(id = R.color.red_zhuhong)
+        }else{
+            Intent(this, ForegroundService::class.java).apply {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    Log.d(classTag, "Call startForegroundService")
+                    startForegroundService(this)
+                } else {
+                    startService(this)
                 }
             }
         }
@@ -275,15 +278,13 @@ class MainActivity : ComponentActivity() {
                         verticalAlignment = Alignment.CenterVertically
                     ){
                         Card(
-
                             shape = CutCornerShape(0.dp),colors = CardDefaults.cardColors(colorResource(id = R.color.blue_jiqing))){
-
                             Text("v1.2 Reanimated",
                                 style= TextStyle(color = Color.Yellow),modifier = Modifier.padding(5.dp,2.dp),
                                 fontWeight = FontWeight.Bold
                             )
                         }
-                        Text(" Build version: 3")
+                        //Text(" Build version: 3")
                     }
                     Text("Build version: 第 103 次测试")
                 }
@@ -393,11 +394,11 @@ class MainActivity : ComponentActivity() {
 
     @Composable
     fun CreateCardButton(
-        onClick: () -> Unit,
         icon: Painter,
         title: String,
         text: String,
-        color: Color
+        color: Color,
+        onClick: () -> Unit,
     ) {
         Button(
             onClick = onClick,

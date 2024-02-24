@@ -24,9 +24,22 @@ import android.view.WindowManager
 import android.view.animation.DecelerateInterpolator
 import android.widget.LinearLayout
 import com.google.android.material.button.MaterialButton
+import com.google.android.material.textview.MaterialTextView
 
 
 class FloatingDialogService : Service() {
+    private val handler = Handler(Looper.getMainLooper())
+    private val closeFloatingDialogRunnable = Runnable {
+        closeFloatingDialogBuiltin()
+    }
+    private val showTipsRunnable = Runnable {
+        contentView?.findViewById<MaterialTextView>(R.id.text_tips)?.visibility = View.VISIBLE
+        val windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
+        if (contentView != null) {
+            windowManager.updateViewLayout(contentView!!, contentView!!.layoutParams)
+        }
+    }
+
     companion object {
         const val classTag = "FloatingDialogService"
         const val intent_type_id = "intent_extras_data_type"
@@ -197,7 +210,7 @@ class FloatingDialogService : Service() {
                     }
 
                     MotionEvent.ACTION_UP -> {
-                        if (lastTouchAction == MotionEvent.ACTION_DOWN) { //如果触发了滑动就不是点击事件
+                        if (lastTouchAction == MotionEvent.ACTION_DOWN) {
                             Log.d(classTag, "performClick because of ACTION_DOWN")
                             view.performClick()
 
@@ -249,6 +262,8 @@ class FloatingDialogService : Service() {
             val btnDeleteShare = findViewById<MaterialButton>(R.id.btn_delete_after_share)
             val btnClose = findViewById<MaterialButton>(R.id.btn_close)
             val btnWaiting = findViewById<MaterialButton>(R.id.btn_waiting)
+            val btnOk = findViewById<MaterialButton>(R.id.btn_waiting_ok)
+            val btnIgnore = findViewById<MaterialButton>(R.id.btn_waiting_ignore)
             btnWaiting?.setOnClickListener {
                 onClickWaitingButton()
             }
@@ -268,20 +283,61 @@ class FloatingDialogService : Service() {
             btnClose.setOnTouchListener(onTouchListener)
             btnDeleteDirectly.setOnTouchListener(onTouchListener)
             btnDeleteShare.setOnTouchListener(onTouchListener)
+            btnOk.setOnTouchListener(onTouchListener)
+            btnIgnore.setOnTouchListener(onTouchListener)
             setOnTouchListener(onTouchListener)
             fadeIn(this)
         }
         windowManager.addView(contentView, windowParams)
-        Handler(Looper.getMainLooper()).postDelayed({
-            if (contentView != null) {
-                fadeOut(contentView!!)
-            }
-        }, 30 * 1000L)
+        handler.postDelayed(closeFloatingDialogRunnable, 15 * 1000L)
+        handler.postDelayed(showTipsRunnable, 5 * 1000L)
         Log.d(classTag, "Create FloatingDialog successfully.")
     }
 
+    private fun closeFloatingDialogBuiltin() {
+        if (contentView != null) {
+            fadeOut(contentView!!)
+        }
+    }
+
     private fun onClickWaitingButton() {
-        TODO("Not yet implemented")
+        handler.removeCallbacks(closeFloatingDialogRunnable)
+        clearFloatingDialog()
+        if (contentView != null) {
+            contentView!!.apply {
+                val windowManager = getSystemService(Context.WINDOW_SERVICE) as WindowManager
+                val btnOk = findViewById<MaterialButton>(R.id.btn_waiting_ok)
+                val btnIgnore = findViewById<MaterialButton>(R.id.btn_waiting_ignore)
+                val textTips = findViewById<MaterialTextView>(R.id.text_tips)
+                textTips.text = context.getString(R.string.floatingdialog_tips_alreadywaiting)
+                btnOk.visibility = View.VISIBLE
+                btnIgnore.visibility = View.VISIBLE
+                windowManager.updateViewLayout(this, this.layoutParams)
+                btnOk.setOnClickListener {
+                    Log.d(classTag, "Call INTENT_DELETE_DIRECTLY")
+                    deleteImage()
+                    fadeOut(this)
+                }
+                btnIgnore.setOnClickListener {
+                    fadeOut(this)
+                }
+            }
+        }
+    }
+
+    private fun clearFloatingDialog() {
+        if (contentView != null) {
+            contentView!!.apply {
+                val btnDeleteDirectly = findViewById<MaterialButton>(R.id.btn_delete_directly)
+                val btnDeleteShare = findViewById<MaterialButton>(R.id.btn_delete_after_share)
+                val btnClose = findViewById<MaterialButton>(R.id.btn_close)
+                val btnWaiting = findViewById<MaterialButton>(R.id.btn_waiting)
+                btnWaiting.visibility = View.GONE
+                btnDeleteShare.visibility = View.GONE
+                btnClose.visibility = View.GONE
+                btnDeleteDirectly.visibility = View.GONE
+            }
+        }
     }
 
     private fun fadeIn(view: View) {

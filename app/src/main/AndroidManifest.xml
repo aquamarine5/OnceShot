@@ -36,7 +36,6 @@
         <activity
             android:name=".FloatingDialog"
             android:exported="true"
-
             android:theme="@style/Theme.Material3.DayNight.NoActionBar" />
         <activity
             android:name=".MainActivity"

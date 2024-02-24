@@ -354,7 +354,7 @@ class ScreenShotListenManager private constructor(context: Context?) {
         private val KEYWORDS = arrayOf(
             "screenshot", "screen_shot", "screen-shot", "screen shot",
             "screencapture", "screen_capture", "screen-capture", "screen capture",
-            "screencap", "screen_cap", "screen-cap", "screen cap","MuMu12"
+            "screencap", "screen_cap", "screen-cap", "screen cap", "MuMu12"
         )
 
         /**

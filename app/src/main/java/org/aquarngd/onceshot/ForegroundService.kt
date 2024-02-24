@@ -1,6 +1,5 @@
 package org.aquarngd.onceshot
 
-import android.app.ActivityManager
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.Service
@@ -13,16 +12,12 @@ import android.graphics.Bitmap
 import android.graphics.ImageDecoder
 import android.net.Uri
 import android.os.Build
-import android.os.Handler
 import android.os.IBinder
 import android.provider.MediaStore
 import android.util.Log
 import android.view.ContextThemeWrapper
-import android.view.Gravity
-import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.view.WindowManager
 import android.widget.LinearLayout
 import androidx.core.app.NotificationCompat
 import com.google.android.material.button.MaterialButton
@@ -131,13 +126,15 @@ class ForegroundService : Service() {
             btnDeleteShare.visibility = View.GONE
         }
     }
-    private fun callFloatingDialogService(id:Long){
+
+    private fun callFloatingDialogService(id: Long) {
         startService(Intent().apply {
             setClass(applicationContext, FloatingDialogService::class.java)
             putExtra(intent_type_id, INTENT_SHOW_FLOATINGWINDOW)
             putExtra(intent_uri_id, id)
         })
     }
+
     private fun startFileObserver() {
         screenShotListenManager!!.setListener {
             relativePath = ContentUris.withAppendedId(

@@ -99,7 +99,7 @@ class FloatingDialogService : Service() {
             return
         }
         val result = contentResolver.delete(uri!!, null, null)
-        Log.d(classTag, "Delete image result:${{ result == 1 }.toString()}")
+        Log.d(classTag, "Delete image result:${{ (result == 1).toString() }}")
     }
 
     private fun shareImage() {
@@ -119,21 +119,34 @@ class FloatingDialogService : Service() {
         fadeOut(contentView)
         Handler(Looper.getMainLooper()).postDelayed({
             deleteImage()
-        }, getDuration()*1000L)
+        }, getDuration() * 1000L)
     }
 
-    private fun animSlide(view: View, leftFrom: Int, leftTo: Int, duration: Int) {
+    private fun animSlide(
+        view: View,
+        leftFrom: Int,
+        leftTo: Int,
+        duration: Int,
+        windowManager: WindowManager,
+        lp: WindowManager.LayoutParams
+    ) {
         val valueAnimator = ValueAnimator.ofInt(leftFrom, leftTo)
         valueAnimator.addUpdateListener { _ ->
             val viewLeft = valueAnimator.animatedValue as Int
-            view.layout(viewLeft, view.top, viewLeft + view.width, view.bottom)
+            lp.x = viewLeft
+            windowManager.updateViewLayout(view, lp)
         }
         valueAnimator.duration = (if (duration < 0) 0 else duration).toLong()
         valueAnimator.start()
     }
-    private fun getDuration():Int{
-        return getSharedPreferences(MainActivity.SPNAME, MODE_PRIVATE).getInt(MainActivity.SPKEY_DURATION,30)
+
+    private fun getDuration(): Int {
+        return getSharedPreferences(
+            MainActivity.SPNAME,
+            MODE_PRIVATE
+        ).getInt(MainActivity.SPKEY_DURATION, 30)
     }
+
     private fun createFloatingWindow() {
         val windowManager = getSystemService(Context.WINDOW_SERVICE) as WindowManager
         val windowParams = WindowManager.LayoutParams().apply {
@@ -148,22 +161,24 @@ class FloatingDialogService : Service() {
             height = WindowManager.LayoutParams.WRAP_CONTENT
             flags = (WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL
                     or WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE)
-            format=PixelFormat.TRANSPARENT
+            format = PixelFormat.TRANSPARENT
         }
         contentView = LayoutInflater.from(this).inflate(R.layout.activity_floating_dialog, null)
         contentView!!.apply {
-            var lastTouchAction=-1
-            var clickX=0f
-            var x=0f
-            var y=0f
-            val onTouchListener=OnTouchListener { view, event ->
-                val lp=layoutParams as WindowManager.LayoutParams
+            var lastTouchAction = -1
+            var clickX = 0f
+            var clickY = 0f
+            var x = 0f
+            var y = 0f
+            val onTouchListener = OnTouchListener { view, event ->
+                val lp = layoutParams as WindowManager.LayoutParams
                 when (event.action) {
                     MotionEvent.ACTION_DOWN -> {
                         lastTouchAction = MotionEvent.ACTION_DOWN
-                        clickX=event.rawX
-                        x=event.rawX
-                        y=event.rawY
+                        clickX = event.rawX
+                        clickY = event.rawY
+                        x = event.rawX
+                        y = event.rawY
                         return@OnTouchListener false
                     }
 
@@ -173,36 +188,59 @@ class FloatingDialogService : Service() {
                         val movedX = nowX - x
                         val movedY = nowY - y
                         lastTouchAction = MotionEvent.ACTION_MOVE
-                        x=nowX
-                        y=nowY
-                        lp.x+=movedX.toInt()
-                        lp.y+=movedY.toInt()
+                        x = nowX
+                        y = nowY
+                        lp.x += movedX.toInt()
+                        lp.y += movedY.toInt()
                         windowManager.updateViewLayout(this, lp)
                         return@OnTouchListener false
                     }
 
                     MotionEvent.ACTION_UP -> {
                         if (lastTouchAction == MotionEvent.ACTION_DOWN) { //如果触发了滑动就不是点击事件
+                            Log.d(classTag, "performClick because of ACTION_DOWN")
                             view.performClick()
-                        }else{
-                            if ((event.rawX - 20) < -20){
+
+                            return@OnTouchListener false
+                        } else {
+                            if (kotlin.math.abs((clickX * clickX - event.rawX * event.rawX) + (clickY * clickY - event.rawY * event.rawY)) < 400) {
+                                Log.d(
+                                    classTag,
+                                    "performClick because of distance < 400, ${(clickX * clickX - event.rawX * event.rawX) + (clickY * clickY - event.rawY * event.rawY)}"
+                                )
+                                view.performClick()
+                                return@OnTouchListener false
+                            }
+                            if ((event.rawX - 20) < -20) {
                                 fadeOutSlided(this)
                                 windowManager.updateViewLayout(this, lp)
                                 return@OnTouchListener true
-                            }
-                            else{
-                                val limitDistance=(resources.displayMetrics.widthPixels-this.width)/2
-                                if(this.x<limitDistance){
-                                    animSlide(view,lp.x,0,(500*(this.left+20)/(limitDistance+20)).toInt())
-                                }else{
-
-                                    animSlide(view,lp.x,resources.displayMetrics.widthPixels-20-this.width,(500*(resources.displayMetrics.widthPixels-this.right)/limitDistance).toInt())
+                            } else {
+                                val limitDistance =
+                                    (resources.displayMetrics.widthPixels - this.width) / 2
+                                if (this.x < limitDistance) {
+                                    animSlide(
+                                        this,
+                                        lp.x,
+                                        20,
+                                        (1000 * (this.left + 20) / (limitDistance + 20)),
+                                        windowManager,
+                                        lp
+                                    )
+                                } else {
+                                    animSlide(
+                                        this,
+                                        lp.x,
+                                        resources.displayMetrics.widthPixels - 20 - this.width,
+                                        (1000 * (resources.displayMetrics.widthPixels - this.right) / limitDistance),
+                                        windowManager,
+                                        lp
+                                    )
                                 }
                                 windowManager.updateViewLayout(this, lp)
                             }
                             return@OnTouchListener true
                         }
-                        return@OnTouchListener false
                     }
                 }
                 false
@@ -210,6 +248,10 @@ class FloatingDialogService : Service() {
             val btnDeleteDirectly = findViewById<MaterialButton>(R.id.btn_delete_directly)
             val btnDeleteShare = findViewById<MaterialButton>(R.id.btn_delete_after_share)
             val btnClose = findViewById<MaterialButton>(R.id.btn_close)
+            val btnWaiting = findViewById<MaterialButton>(R.id.btn_waiting)
+            btnWaiting?.setOnClickListener {
+                onClickWaitingButton()
+            }
             btnClose?.setOnClickListener {
                 fadeOut(this)
             }
@@ -222,6 +264,7 @@ class FloatingDialogService : Service() {
                 Log.d(classTag, "Call INTENT_SHARE_DELETE")
                 onClickShareDeleteButton(this)
             }
+            btnWaiting.setOnTouchListener(onTouchListener)
             btnClose.setOnTouchListener(onTouchListener)
             btnDeleteDirectly.setOnTouchListener(onTouchListener)
             btnDeleteShare.setOnTouchListener(onTouchListener)
@@ -230,26 +273,34 @@ class FloatingDialogService : Service() {
         }
         windowManager.addView(contentView, windowParams)
         Handler(Looper.getMainLooper()).postDelayed({
-            fadeOut(contentView!!)
-        }, 30*1000L)
+            if (contentView != null) {
+                fadeOut(contentView!!)
+            }
+        }, 30 * 1000L)
         Log.d(classTag, "Create FloatingDialog successfully.")
     }
-    private fun fadeIn(view: View){
+
+    private fun onClickWaitingButton() {
+        TODO("Not yet implemented")
+    }
+
+    private fun fadeIn(view: View) {
         view.apply {
             animate()
                 .alpha(1f)
-                .x(0f)
+                .x(20f)
                 .setInterpolator(DecelerateInterpolator())
                 .duration = 200
         }
     }
-    private fun fadeOutSlided(view :View){
+
+    private fun fadeOutSlided(view: View) {
         view.apply {
-            animate().apply{
+            animate().apply {
                 alpha(0f)
                 x(-150f)
                 interpolator = DecelerateInterpolator()
-                duration=200
+                duration = 200
                 setListener(object : AnimatorListenerAdapter() {
                     override fun onAnimationEnd(animation: Animator) {
                         closeFloatingWindow()
@@ -259,12 +310,13 @@ class FloatingDialogService : Service() {
             }
         }
     }
-    private fun fadeOut(view: View){
+
+    private fun fadeOut(view: View) {
         view.apply {
-            findViewById<LinearLayout>(R.id.linear_layout)!!.animate().apply{
+            findViewById<LinearLayout>(R.id.linear_layout)!!.animate().apply {
                 alpha(0f)
                 interpolator = DecelerateInterpolator()
-                duration=200
+                duration = 200
                 setListener(object : AnimatorListenerAdapter() {
                     override fun onAnimationEnd(animation: Animator) {
                         closeFloatingWindow()

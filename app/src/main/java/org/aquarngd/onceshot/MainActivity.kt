@@ -2,7 +2,6 @@ package org.aquarngd.onceshot
 
 import android.Manifest
 import android.annotation.SuppressLint
-import android.content.Context.MODE_PRIVATE
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
@@ -19,12 +18,11 @@ import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CutCornerShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -41,6 +39,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -54,7 +53,6 @@ import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
@@ -64,7 +62,16 @@ import org.aquarngd.stackbricks.StackbricksCompose
 import org.aquarngd.stackbricks.msgpvder.WeiboCommentsMsgPvder
 
 class MainActivity : ComponentActivity() {
-    var status=ForegroundServiceStatus.STATUS_INIT
+    var status = ForegroundServiceStatus.STATUS_INIT
+    val permissionList = mutableStateMapOf(
+        Manifest.permission.SYSTEM_ALERT_WINDOW to false,
+        "android.permission.READ_MEDIA_IMAGES" to false,
+        "android.permission.MANAGE_EXTERNAL_STORAGE" to false,
+        "android.permission.MANAGE_MEDIA" to false,
+        Manifest.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS to false
+    )
+    var permissionCheckCounter=false
+
     companion object {
         const val REQUEST_PERMISSION_NOF = 1001
         const val REQUEST_PERMISSION_IMAGE = 1002
@@ -80,16 +87,180 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    override fun onResume() {
+        refreshPermissionCheckContent()
+        super.onResume()
+    }
+    private fun refreshPermissionCheckContent(){
+        if(!permissionCheckCounter) permissionCheckCounter=true
+        else{
+            var checkPermissionStatus=true
+
+            if (Settings.canDrawOverlays(this@MainActivity))
+                permissionList[Manifest.permission.SYSTEM_ALERT_WINDOW]=false
+            else checkPermissionStatus=false
+            if (applicationContext.checkSelfPermission(Manifest.permission.READ_MEDIA_IMAGES) == PackageManager.PERMISSION_GRANTED)
+                permissionList["android.permission.READ_MEDIA_IMAGES"]=false
+            else checkPermissionStatus=false
+            if (applicationContext.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED)
+                permissionList["android.permission.POST_NOTIFICATIONS"]=false
+            else checkPermissionStatus=false
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                    if(Environment.isExternalStorageManager()){
+                        permissionList[Manifest.permission.MANAGE_EXTERNAL_STORAGE]=true
+                    }else checkPermissionStatus=false
+                }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                    if(MediaStore.canManageMedia(applicationContext)){
+                        permissionList[Manifest.permission.MANAGE_MEDIA]=true
+                    }
+                    else checkPermissionStatus=false
+                }
+
+            if(checkPermissionStatus){
+                launchService()
+                status=ForegroundServiceStatus.STATUS_RUNNING
+            }else{
+                Toast.makeText(applicationContext,"权限还没有全部授权！",Toast.LENGTH_SHORT).show()
+            }
+
+        }
+    }
+    @Composable
+    fun drawPermissionCheckContent(): Boolean {
+        var checkPermissionPassed = false
+        LazyColumn(content = {
+            if (!Settings.canDrawOverlays(this@MainActivity)) {
+                permissionList[Manifest.permission.SYSTEM_ALERT_WINDOW]=true
+                item(key=Manifest.permission.SYSTEM_ALERT_WINDOW) {
+                    if(permissionList[Manifest.permission.SYSTEM_ALERT_WINDOW] == true){
+                        CreateCardButton(
+                            onClick = {
+                                requestOverlayDisplayPermission()
+                            },
+                            icon = painterResource(id = R.drawable.icon_floating_window),
+                            title = stringResource(R.string.mainwindow_requirepermission_floating_title),
+                            text = stringResource(R.string.mainwindow_requirepermission_floating_text),
+                            color = colorResource(id = R.color.red_zhuhong)
+                        )
+                    }
+
+                }
+                checkPermissionPassed = true
+            }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                if (applicationContext.checkSelfPermission(Manifest.permission.READ_MEDIA_IMAGES) != PackageManager.PERMISSION_GRANTED) {
+                    permissionList[Manifest.permission.READ_MEDIA_IMAGES]=true
+                    item(key=Manifest.permission.READ_MEDIA_IMAGES) {
+                        if(permissionList[Manifest.permission.READ_MEDIA_IMAGES] == true){
+                        CreateCardButton(
+                            onClick = {
+                                requestPermissions(
+                                    arrayOf(Manifest.permission.READ_MEDIA_IMAGES),
+                                    REQUEST_PERMISSION_IMAGE
+                                )
+                            },
+                            icon = painterResource(id = R.drawable.icon_read_image),
+                            title = stringResource(R.string.mainwindow_requirepermission_readimage_title),
+                            text = stringResource(R.string.mainwindow_requirepermission_readimage_text),
+                            color = colorResource(id = R.color.red_zhuhong)
+                        )}
+                    }
+                    checkPermissionPassed = true
+                }
+                if (applicationContext.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                    permissionList[Manifest.permission.POST_NOTIFICATIONS]=true
+                    item(key=Manifest.permission.POST_NOTIFICATIONS) {
+                        if(permissionList[Manifest.permission.POST_NOTIFICATIONS] == true){
+                        CreateCardButton(
+                            onClick = {
+                                requestPermissions(
+                                    arrayOf(Manifest.permission.POST_NOTIFICATIONS),
+                                    REQUEST_PERMISSION_NOF
+                                )
+                            },
+                            icon = painterResource(id = R.drawable.icon_notification),
+                            title = stringResource(R.string.mainwindow_requirepermission_notification_title),
+                            text = stringResource(R.string.mainwindow_requirepermission_notification_text),
+                            color = colorResource(id = R.color.red_zhuhong)
+                        )}
+                    }
+                    checkPermissionPassed = true
+                }
+            }
+            if (Build.VERSION.SDK_INT > Build.VERSION_CODES.R) {
+                if (!Environment.isExternalStorageManager()) {
+                    permissionList[Manifest.permission.MANAGE_EXTERNAL_STORAGE]=true
+                    item(key=Manifest.permission.MANAGE_EXTERNAL_STORAGE) {
+                        if(permissionList[Manifest.permission.MANAGE_EXTERNAL_STORAGE]==true){
+                        CreateCardButton(
+                            onClick = {
+                                startActivity(Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION).apply {
+                                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                })
+                            },
+                            icon = painterResource(id = R.drawable.icon_file_access),
+                            title = stringResource(R.string.mainwindow_requirepermission_fileaccess_title),
+                            text = stringResource(R.string.mainwindow_requirepermission_fileaccess_text),
+                            color = colorResource(id = R.color.red_zhuhong)
+                        )}
+                    }
+                    checkPermissionPassed = true
+                }
+                if (!MediaStore.canManageMedia(applicationContext)) {
+                    permissionList[Manifest.permission.MANAGE_MEDIA]=true
+                    item(key=Manifest.permission.MANAGE_MEDIA) {
+                        if(
+                            permissionList[Manifest.permission.MANAGE_MEDIA]==true)
+                        CreateCardButton(
+                            onClick = {
+                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                                    startActivity(Intent(Settings.ACTION_REQUEST_MANAGE_MEDIA).apply {
+                                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                    })
+                                }
+                            },
+                            icon = painterResource(id = R.drawable.icon_mediastore_access),
+                            title = stringResource(R.string.mainwindow_requirepermission_mediastore_title),
+                            text = stringResource(R.string.mainwindow_requirepermission_mediastore_text),
+                            color = colorResource(id = R.color.red_zhuhong)
+                        )
+                    }
+                    checkPermissionPassed = true
+                }
+            }
+            if (!(getSystemService(POWER_SERVICE) as PowerManager).isIgnoringBatteryOptimizations(
+                    packageName
+                )
+            ) {
+                item(key=Manifest.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS) {
+                    CreateCardButton(
+                        onClick = {
+                            startActivity(Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
+                                data = Uri.parse("package:$packageName")
+                            })
+                        },
+                        icon = painterResource(id = R.drawable.icon_battery),
+                        title = stringResource(R.string.mainwindow_requirepermission_battery_title),
+                        text = stringResource(R.string.mainwindow_requirepermission_battery_text),
+                        color = colorResource(id = R.color.red_zhuhong)
+                    )
+                }
+            }
+        })
+
+        return checkPermissionPassed
+    }
+
     @SuppressLint("BatteryLife")
     @Composable
     fun drawMainContent() {
-        var onceshotIcon by remember{mutableStateOf(R.drawable.icon_service_start)}
-        var onceShotTitle by remember{mutableStateOf("OnceShot 服务已经启动")}
-        var onceShotText by remember{mutableStateOf("点击停止")}
-        var onceShotBackgroundColor by remember{mutableStateOf(Color(getColor(R.color.teal_200)))}
+        var onceShotIcon by remember { mutableStateOf(R.drawable.icon_service_start) }
+        var onceShotTitle by remember { mutableStateOf("OnceShot 服务已经启动") }
+        var onceShotText by remember { mutableStateOf("点击停止") }
+        var onceShotBackgroundColor by remember { mutableStateOf(Color(getColor(R.color.teal_200))) }
         var checkPermissionPassed = false
         OnceShotTheme {
-            // A surface container using the 'background' color from the theme
             Surface(
                 modifier = Modifier.fillMaxSize(),
                 color = MaterialTheme.colorScheme.background
@@ -98,12 +269,32 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.verticalScroll(rememberScrollState())
                 ) {
                     CreateCardButton(
-                        icon = painterResource(id = onceshotIcon),
+                        icon = painterResource(id = onceShotIcon),
                         title = onceShotTitle,
                         text = onceShotText,
                         color = onceShotBackgroundColor
-                    ){
+                    ) {
+                        when (status) {
+                            ForegroundServiceStatus.STATUS_INIT -> TODO()
+                            ForegroundServiceStatus.STATUS_RUNNING -> {
+                                stopService(
+                                    Intent(
+                                        applicationContext,
+                                        ForegroundService::class.java
+                                    )
+                                )
+                                onceShotIcon = R.drawable.icon_service_click
+                                onceShotTitle = "OnceShot 未在运行中"
+                                onceShotText = "点击启动 OnceShot 服务"
+                                onceShotBackgroundColor =
+                                    Color(getColor(R.color.yellow_youcaihuahuang))
+                                status = ForegroundServiceStatus.STATUS_STOP
+                            }
 
+                            ForegroundServiceStatus.STATUS_PERMISSION_MISSING -> TODO()
+                            ForegroundServiceStatus.STATUS_EXCEPTION -> TODO()
+                            ForegroundServiceStatus.STATUS_STOP -> TODO()
+                        }
                     }
                     drawDebugVersionCard()
                     StackbricksCompose(
@@ -121,98 +312,8 @@ class MainActivity : ComponentActivity() {
                             ),
                             color = Color.Yellow
                         )
-                    } else {
                     }
-
-                    if (!Settings.canDrawOverlays(this@MainActivity)) {
-                        CreateCardButton(
-                            onClick = {
-                                requestOverlayDisplayPermission()
-                            },
-                            icon = painterResource(id = R.drawable.icon_floating_window),
-                            title = stringResource(R.string.mainwindow_requirepermission_floating_title),
-                            text = stringResource(R.string.mainwindow_requirepermission_floating_text),
-                            color = colorResource(id = R.color.red_zhuhong)
-                        )
-                        checkPermissionPassed = true
-                    }
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                        if (applicationContext.checkSelfPermission(Manifest.permission.READ_MEDIA_IMAGES) != PackageManager.PERMISSION_GRANTED) {
-                            CreateCardButton(
-                                onClick = {
-                                    requestPermissions(
-                                        arrayOf(Manifest.permission.READ_MEDIA_IMAGES),
-                                        REQUEST_PERMISSION_IMAGE
-                                    )
-                                },
-                                icon = painterResource(id = R.drawable.icon_read_image),
-                                title = stringResource(R.string.mainwindow_requirepermission_readimage_title),
-                                text = stringResource(R.string.mainwindow_requirepermission_readimage_text),
-                                color = colorResource(id = R.color.red_zhuhong)
-                            )
-                            checkPermissionPassed = true
-                        }
-                        if (applicationContext.checkSelfPermission(Manifest.permission.READ_MEDIA_IMAGES) != PackageManager.PERMISSION_GRANTED) {
-                            CreateCardButton(
-                                onClick = {
-                                    requestPermissions(
-                                        arrayOf(Manifest.permission.POST_NOTIFICATIONS),
-                                        REQUEST_PERMISSION_NOF
-                                    )
-                                },
-                                icon = painterResource(id = R.drawable.icon_notification),
-                                title = stringResource(R.string.mainwindow_requirepermission_notification_title),
-                                text = stringResource(R.string.mainwindow_requirepermission_notification_text),
-                                color = colorResource(id = R.color.red_zhuhong)
-                            )
-                            checkPermissionPassed = true
-                        }
-                    }
-                    if (Build.VERSION.SDK_INT > Build.VERSION_CODES.R) {
-                        if (!Environment.isExternalStorageManager()) {
-                            CreateCardButton(
-                                onClick = {
-                                    startActivity(Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION).apply {
-                                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                                    })
-                                },
-                                icon = painterResource(id = R.drawable.icon_file_access),
-                                title = stringResource(R.string.mainwindow_requirepermission_fileaccess_title),
-                                text = stringResource(R.string.mainwindow_requirepermission_fileaccess_text),
-                                color = colorResource(id = R.color.red_zhuhong)
-                            )
-                            checkPermissionPassed = true
-                        }
-                        if (!MediaStore.canManageMedia(applicationContext)) {
-                            CreateCardButton(
-                                onClick = {
-                                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                                        startActivity(Intent(Settings.ACTION_REQUEST_MANAGE_MEDIA).apply {
-                                            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                                        })
-                                    }
-                                },
-                                icon = painterResource(id = R.drawable.icon_mediastore_access),
-                                title = stringResource(R.string.mainwindow_requirepermission_mediastore_title),
-                                text = stringResource(R.string.mainwindow_requirepermission_mediastore_text),
-                                color = colorResource(id = R.color.red_zhuhong)
-                            )
-                            checkPermissionPassed = true
-                        }
-                    }
-                    if(!(getSystemService(POWER_SERVICE) as PowerManager).isIgnoringBatteryOptimizations(packageName)){
-                        CreateCardButton(
-                            onClick = {
-                                startActivity(Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply{
-                                    data = Uri.parse("package:$packageName");
-                                })
-                            },
-                            icon = painterResource(id = R.drawable.icon_battery),
-                            title = stringResource(R.string.mainwindow_requirepermission_battery_title),
-                            text = stringResource(R.string.mainwindow_requirepermission_battery_text),
-                            color = colorResource(id = R.color.red_zhuhong)
-                        )
-                    }
+                    checkPermissionPassed = drawPermissionCheckContent()
                     CreateCard(
                         icon = painterResource(id = R.drawable.icon_material_design),
                         title = stringResource(R.string.mainwindow_onceshot_compose_title),
@@ -232,19 +333,24 @@ class MainActivity : ComponentActivity() {
             onceShotTitle = "OnceShot 未启动"
             onceShotText = "请先给与 OnceShot 全部的必须权限，然后退出重进"
             onceShotBackgroundColor = colorResource(id = R.color.red_zhuhong)
-        }else{
-            Intent(this, ForegroundService::class.java).apply {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    Log.d(classTag, "Call startForegroundService")
-                    startForegroundService(this)
-                } else {
-                    startService(this)
-                }
+            status = ForegroundServiceStatus.STATUS_PERMISSION_MISSING
+        } else {
+            launchService()
+            status = ForegroundServiceStatus.STATUS_RUNNING
+        }
+    }
+    fun launchService(){
+        Intent(this, ForegroundService::class.java).apply {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                Log.d(classTag, "Call startForegroundService")
+                startForegroundService(this)
+            } else {
+                startService(this)
             }
         }
     }
     @Composable
-    fun drawDebugVersionCard(){
+    fun drawDebugVersionCard() {
         Card(
             shape = RoundedCornerShape(18.dp),
             colors = CardDefaults.cardColors(Color.Yellow),
@@ -276,11 +382,15 @@ class MainActivity : ComponentActivity() {
                     Row(
                         horizontalArrangement = Arrangement.Center,
                         verticalAlignment = Alignment.CenterVertically
-                    ){
+                    ) {
                         Card(
-                            shape = CutCornerShape(0.dp),colors = CardDefaults.cardColors(colorResource(id = R.color.blue_jiqing))){
-                            Text("v1.2 Reanimated",
-                                style= TextStyle(color = Color.Yellow),modifier = Modifier.padding(5.dp,2.dp),
+                            shape = CutCornerShape(0.dp),
+                            colors = CardDefaults.cardColors(colorResource(id = R.color.blue_jiqing))
+                        ) {
+                            Text(
+                                "v1.2 Reanimated",
+                                style = TextStyle(color = Color.Yellow),
+                                modifier = Modifier.padding(5.dp, 2.dp),
                                 fontWeight = FontWeight.Bold
                             )
                         }
@@ -291,6 +401,7 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
+
     @Composable
     fun drawDurationSettingCard() {
         Card(
@@ -319,20 +430,22 @@ class MainActivity : ComponentActivity() {
                     Text("设置\"分享后删除\"操作在分享多久后删除截图", fontWeight = FontWeight.Bold)
                     //
                     var text by remember {
-                        mutableStateOf(getSharedPreferences(SPNAME, MODE_PRIVATE).getInt(
-                            SPKEY_DURATION,30).toString()
+                        mutableStateOf(
+                            getSharedPreferences(SPNAME, MODE_PRIVATE).getInt(
+                                SPKEY_DURATION, 30
+                            ).toString()
                         )
                     }
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceAround,
-                        modifier =Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth()
                     ) {
                         TextField(
                             value = text,
-                            modifier=Modifier.width(130.dp),
+                            modifier = Modifier.width(130.dp),
                             onValueChange = {
-                                            text=it
+                                text = it
                             },
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
                         )
@@ -341,7 +454,8 @@ class MainActivity : ComponentActivity() {
                                 getSharedPreferences(SPNAME, MODE_PRIVATE).edit()
                             sharedPreferences.putInt(SPKEY_DURATION, text.toInt())
                             sharedPreferences.apply()
-                            Toast.makeText(applicationContext,"保存成功",Toast.LENGTH_SHORT).show()
+                            Toast.makeText(applicationContext, "保存成功", Toast.LENGTH_SHORT)
+                                .show()
                         }) {
                             Text("保存")
                         }
@@ -470,14 +584,18 @@ fun GreetingPreview() {
                         drawDebugVersionCard()
                         StackbricksCompose(
                             rememberCoroutineScope(),
-                            LocalContext.current, WeiboCommentsMsgPvder.MsgPvderID, "5001248562483153"
+                            LocalContext.current,
+                            WeiboCommentsMsgPvder.MsgPvderID,
+                            "5001248562483153"
                         ).DrawCompose()
                         drawDurationSettingCard()
                         CreateCardButton(
                             onClick = {
-                                startActivity(Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION).apply {
-                                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                                })
+                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                                    startActivity(Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION).apply {
+                                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                    })
+                                }
                             },
                             icon = painterResource(id = R.drawable.icon_file_access),
                             title = stringResource(R.string.mainwindow_requirepermission_fileaccess_title),
@@ -511,10 +629,12 @@ fun GreetingPreview() {
                         )
                         CreateCardButton(
                             onClick = {
-                                requestPermissions(
-                                    arrayOf(Manifest.permission.READ_MEDIA_IMAGES),
-                                    MainActivity.REQUEST_PERMISSION_IMAGE
-                                )
+                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                                    requestPermissions(
+                                        arrayOf(Manifest.permission.READ_MEDIA_IMAGES),
+                                        MainActivity.REQUEST_PERMISSION_IMAGE
+                                    )
+                                }
                             },
                             icon = painterResource(id = R.drawable.icon_read_image),
                             title = stringResource(R.string.mainwindow_requirepermission_readimage_title),

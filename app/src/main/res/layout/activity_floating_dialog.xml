@@ -2,18 +2,20 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/linear_layout"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
     android:background="@drawable/floatingdialog_background"
     android:orientation="vertical"
-    android:theme="@style/Theme.MaterialComponents.DayNight.NoActionBar"
-    android:id="@+id/linear_layout"
     android:alpha="0.0"
+    android:theme="@style/Theme.MaterialComponents.DayNight.NoActionBar"
     tools:context=".FloatingDialog">
 
     <com.google.android.material.textview.MaterialTextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:paddingLeft="5dp"
+        android:paddingRight="5dp"
         android:text="@string/FloatingDialog_OnceShot"
         android:textAlignment="center"
         app:errorTextAppearance="@style/Theme.MaterialComponents.Light.NoActionBar" />
@@ -42,6 +44,17 @@
         app:strokeColor="@color/teal_700" />
 
     <com.google.android.material.button.MaterialButton
+        android:id="@+id/btn_waiting"
+        style="@style/Widget.Material3.Button.OutlinedButton"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:text="@string/FloatingDialog_Waiting"
+        android:textColor="#000000"
+        android:textSize="14sp"
+        app:strokeColor="@color/teal_700" />
+
+    <com.google.android.material.button.MaterialButton
         android:id="@+id/btn_close"
         style="@style/Widget.Material3.Button.OutlinedButton"
         android:layout_width="match_parent"
@@ -51,6 +64,7 @@
         android:textColor="#000000"
         android:textSize="14sp"
         app:strokeColor="@color/teal_700" />
+
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="wrap_content">

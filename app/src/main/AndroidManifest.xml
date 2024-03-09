@@ -36,7 +36,6 @@
         <activity
             android:name=".FloatingDialog"
             android:exported="true"
-
             android:theme="@style/Theme.Material3.DayNight.NoActionBar" />
         <activity
             android:name=".MainActivity"
@@ -53,18 +52,9 @@
             android:label="FloatingDialogService"/>
         <service
             android:name=".ForegroundService"
-            android:exported="true"
+            android:exported="false"
             android:label="ForegroundService"
             android:launchMode="singleTop" />
-        <provider
-            android:name="androidx.core.content.FileProvider"
-            android:authorities="${applicationId}.file_provider"
-            android:exported="false"
-            android:grantUriPermissions="true">
-            <meta-data
-                android:name="android.support.FILE_PROVIDER_PATHS"
-                android:resource="@xml/file_provider_paths" />
-        </provider>
     </application>
     <queries>
         <intent>

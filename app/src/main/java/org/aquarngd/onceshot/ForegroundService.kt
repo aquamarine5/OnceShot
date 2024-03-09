@@ -12,16 +12,12 @@ import android.graphics.Bitmap
 import android.graphics.ImageDecoder
 import android.net.Uri
 import android.os.Build
-import android.os.Handler
 import android.os.IBinder
 import android.provider.MediaStore
 import android.util.Log
 import android.view.ContextThemeWrapper
-import android.view.Gravity
-import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.view.WindowManager
 import android.widget.LinearLayout
 import androidx.core.app.NotificationCompat
 import com.google.android.material.button.MaterialButton
@@ -47,7 +43,6 @@ class ForegroundService : Service() {
     var isLive = false
     var relativePath: String? = null
     var uri: Uri? = null
-    var contentView: View? = null
 
     override fun onBind(intent: Intent?): IBinder? {
         return null
@@ -61,8 +56,6 @@ class ForegroundService : Service() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         Log.i(classTag, "Received intent: " + intent?.getIntExtra(intent_type_id, INTENT_DEFAULT))
-        if (intent != null) when (intent.getIntExtra(intent_type_id, INTENT_DEFAULT)) {
-        }
         if (!isLive) {
             isLive = true
             startFileObserver()
@@ -134,6 +127,14 @@ class ForegroundService : Service() {
         }
     }
 
+    private fun callFloatingDialogService(id: Long) {
+        startService(Intent().apply {
+            setClass(applicationContext, FloatingDialogService::class.java)
+            putExtra(intent_type_id, INTENT_SHOW_FLOATINGWINDOW)
+            putExtra(intent_uri_id, id)
+        })
+    }
+
     private fun startFileObserver() {
         screenShotListenManager!!.setListener {
             relativePath = ContentUris.withAppendedId(
@@ -144,12 +145,7 @@ class ForegroundService : Service() {
                 MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
                 it
             )
-            startService(Intent().apply {
-                setClass(applicationContext, FloatingDialogService::class.java)
-                putExtra(intent_type_id, INTENT_SHOW_FLOATINGWINDOW)
-                putExtra(intent_uri_id, it)
-            })
-            sendNotification(it)
+            callFloatingDialogService(it)
             Log.d(classTag, "Call screenShotListenManager, uri:$uri")
         }
         screenShotListenManager!!.startListen()

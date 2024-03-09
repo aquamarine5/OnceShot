@@ -41,6 +41,6 @@
     <string name="floatingdialog_Waiting">等等我...</string>
     <string name="floatingdialog_waiting_ok">好了删除吧</string>
     <string name="floatingdialog_waiting_ignore">算了不删了</string>
-    <string name="floatingdialog_tips">10秒后将自动关闭</string>
-    <string name="floatingdialog_tips_alreadywaiting">在摁下按钮前都不会自动关闭</string>
+    <string name="floatingdialog_tips">5秒后将自动关闭</string>
+    <string name="floatingdialog_tips_alreadywaiting">操作前不会自动关闭</string>
 </resources>

@@ -71,7 +71,7 @@ class MainActivity : ComponentActivity() {
         "android.permission.MANAGE_MEDIA" to false,
         Manifest.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS to false
     )
-    var permissionCheckCounter = false
+    private var permissionCheckCounter = false
 
     companion object {
         const val REQUEST_PERMISSION_NOF = 1001

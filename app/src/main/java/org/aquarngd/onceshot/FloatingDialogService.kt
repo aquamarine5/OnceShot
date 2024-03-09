@@ -33,7 +33,7 @@ class FloatingDialogService : Service() {
         closeFloatingDialogBuiltin()
     }
     private val showTipsRunnable = Runnable {
-        contentView?.findViewById<MaterialTextView>(R.id.text_tips)?.visibility = View.VISIBLE
+        contentView?.findViewById<MaterialTextView>(R.id.text_title)?.text=getText(R.string.floatingdialog_tips)
         val windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
         if (contentView != null) {
             windowManager.updateViewLayout(contentView!!, contentView!!.layoutParams)
@@ -344,7 +344,6 @@ class FloatingDialogService : Service() {
         view.apply {
             animate()
                 .alpha(1f)
-                .x(20f)
                 .setInterpolator(DecelerateInterpolator())
                 .duration = 200
         }

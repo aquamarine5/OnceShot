@@ -58,9 +58,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.tencent.bugly.crashreport.CrashReport
 import org.aquarngd.onceshot.ui.theme.OnceShotTheme
 import org.aquarngd.stackbricks.StackbricksCompose
 import org.aquarngd.stackbricks.msgpvder.WeiboCommentsMsgPvder
+import java.util.UUID
 
 class MainActivity : ComponentActivity() {
     var status = ForegroundServiceStatus.STATUS_INIT
@@ -77,12 +79,16 @@ class MainActivity : ComponentActivity() {
         const val REQUEST_PERMISSION_NOF = 1001
         const val REQUEST_PERMISSION_IMAGE = 1002
         const val SPKEY_DURATION = "duration"
+        const val SPKEY_DEVICEID="device_id"
         const val SPNAME = "onceshot"
         const val classTag = "MainActivity"
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        CrashReport.initCrashReport(applicationContext, "2d98a3477d", true, CrashReport.UserStrategy(applicationContext).apply {
+            deviceID=getDeviceUniqueId()
+        })
         setContent {
             drawMainContent()
         }
@@ -92,7 +98,18 @@ class MainActivity : ComponentActivity() {
         refreshPermissionCheckContent()
         super.onResume()
     }
-
+    private fun getDeviceUniqueId():String{
+        val sharedPreferences =
+            getSharedPreferences(SPNAME, MODE_PRIVATE)
+        val value=sharedPreferences.getString(SPKEY_DEVICEID,"")
+        return if(value==""){
+            val uuid=UUID.randomUUID().toString().replace("-", "")
+            sharedPreferences.edit().putString(SPKEY_DEVICEID,uuid).apply()
+            uuid
+        }else{
+            value!!
+        }
+    }
     private fun refreshPermissionCheckContent() {
         if (!permissionCheckCounter) permissionCheckCounter = true
         else {

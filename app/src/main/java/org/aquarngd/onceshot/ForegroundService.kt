@@ -135,7 +135,6 @@ class ForegroundService : Service() {
             putExtra(intent_uri_id, id)
         })
     }
-
     private fun startFileObserver() {
         screenShotListenManager!!.setListener {
             relativePath = ContentUris.withAppendedId(

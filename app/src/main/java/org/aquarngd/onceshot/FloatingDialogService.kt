@@ -25,6 +25,7 @@ import android.view.animation.DecelerateInterpolator
 import android.widget.LinearLayout
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.textview.MaterialTextView
+import org.aquarngd.udca.SharedPreferenceUsageDataCollector
 
 
 class FloatingDialogService : Service() {
@@ -39,6 +40,7 @@ class FloatingDialogService : Service() {
             windowManager.updateViewLayout(contentView!!, contentView!!.layoutParams)
         }
     }
+    private val dataCollector= SharedPreferenceUsageDataCollector(applicationContext)
 
     companion object {
         const val classTag = "FloatingDialogService"
@@ -66,6 +68,7 @@ class FloatingDialogService : Service() {
             )
         )
         if (intent != null) {
+
             val id = intent.getLongExtra(intent_uri_id, -1)
             if (id == -1L) {
                 Log.e(classTag, "Id is null!")

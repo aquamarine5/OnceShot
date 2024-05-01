@@ -1,15 +1,17 @@
 package org.aquarngd.onceshot
 
+import org.aquarngd.udca.UsageDataKey
+
 class AnalysisDataKey {
     companion object{
-        const val SCREENSHOT_COUNT="sc"
-        const val CLICK_DELETE_DIRECTLY="cd"
-        const val CLICK_CLOSE="cc"
-        const val TIMEOUT_CLOSE="tc"
-        const val CLICK_WAITING="cw"
-        const val CLICK_WAITING_DELETE="cwd"
-        const val CLICK_WAITING_IGNORE="cwi"
-        const val CLICK_DELETE_AFTER_SHARE="ca"
-        const val SETTING_DURATION="d"
+        val SCREENSHOT_COUNT=UsageDataKey("sc")
+        val CLICK_DELETE_DIRECTLY=UsageDataKey("cd", listOf(SCREENSHOT_COUNT))
+        val CLICK_CLOSE=UsageDataKey("cc", listOf(SCREENSHOT_COUNT))
+        val TIMEOUT_CLOSE=UsageDataKey("tc", listOf(SCREENSHOT_COUNT))
+        val CLICK_WAITING=UsageDataKey("cw", listOf(SCREENSHOT_COUNT))
+        val CLICK_WAITING_DELETE=UsageDataKey("cwd", listOf(CLICK_WAITING))
+        val CLICK_WAITING_IGNORE=UsageDataKey("cwi", listOf(CLICK_WAITING))
+        val CLICK_DELETE_AFTER_SHARE=UsageDataKey("ca", listOf(SCREENSHOT_COUNT))
+        val SETTING_DURATION="d"
     }
 }

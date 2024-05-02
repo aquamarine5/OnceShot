@@ -1,5 +1,6 @@
 package org.aquarngd.onceshot
 
+import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.Service
@@ -67,7 +68,7 @@ class ForegroundService : Service() {
         Log.w(classTag, "Received onDestroy")
         super.onDestroy()
         isLive = false
-        stopForeground(STOP_FOREGROUND_DETACH)
+        stopForeground(STOP_FOREGROUND_REMOVE)
     }
 
     private fun getAllShareableApplications(): List<ResolveInfo> {
@@ -134,7 +135,6 @@ class ForegroundService : Service() {
             putExtra(intent_uri_id, id)
         })
     }
-
     private fun startFileObserver() {
         screenShotListenManager!!.setListener {
             relativePath = ContentUris.withAppendedId(
@@ -191,19 +191,18 @@ class ForegroundService : Service() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
                 notificationId,
-                foregroundServiceChannelId, NotificationManager.IMPORTANCE_HIGH
+                foregroundServiceChannelId, NotificationManager.IMPORTANCE_LOW
             )
-            channel.enableLights(true)
-            channel.setShowBadge(true)
-
             channel.description = getString(R.string.nof_channel_description)
+            channel.lockscreenVisibility=Notification.VISIBILITY_SECRET
             manager.createNotificationChannel(channel)
         }
         val builder = NotificationCompat.Builder(this, notificationId).apply {
             setSmallIcon(R.drawable.onceshot_logo)
             setContentTitle(getString(R.string.nof_title))
             setContentText(getString(R.string.nof_text))
-            priority = NotificationCompat.PRIORITY_HIGH
+
+            priority = NotificationCompat.PRIORITY_MIN
             setWhen(System.currentTimeMillis())
             setOngoing(true)
         }

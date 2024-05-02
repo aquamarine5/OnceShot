@@ -103,10 +103,10 @@ class FloatingDialogService : Service() {
     }
 
     private fun closeFloatingWindow() {
-
         if (contentView != null) {
             val windowManager = getSystemService(Context.WINDOW_SERVICE) as WindowManager
             windowManager.removeView(contentView)
+            Log.d(classTag,"removeView")
             contentView = null
         }
         stopSelf()
@@ -384,8 +384,6 @@ class FloatingDialogService : Service() {
     }
 
     private fun fadeOut(view: View) {
-        handler.removeCallbacks(closeFloatingDialogRunnable)
-        handler.removeCallbacks(showTipsRunnable)
         view.apply {
             findViewById<LinearLayout>(R.id.linear_layout)!!.animate().apply {
                 alpha(0f)
@@ -399,6 +397,8 @@ class FloatingDialogService : Service() {
                 })
             }
         }
+        handler.removeCallbacks(closeFloatingDialogRunnable)
+        handler.removeCallbacks(showTipsRunnable)
     }
 
     private fun fadeOut(view: View,usageDataKey: UsageDataKey){

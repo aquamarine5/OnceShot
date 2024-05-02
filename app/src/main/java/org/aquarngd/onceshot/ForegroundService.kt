@@ -191,10 +191,10 @@ class ForegroundService : Service() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
                 notificationId,
-                foregroundServiceChannelId, NotificationManager.IMPORTANCE_HIGH
+                foregroundServiceChannelId, NotificationManager.IMPORTANCE_LOW
             )
             channel.description = getString(R.string.nof_channel_description)
-            channel.lockscreenVisibility=Notification.VISIBILITY_PRIVATE
+            channel.lockscreenVisibility=Notification.VISIBILITY_SECRET
             manager.createNotificationChannel(channel)
         }
         val builder = NotificationCompat.Builder(this, notificationId).apply {

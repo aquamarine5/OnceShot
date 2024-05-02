@@ -528,7 +528,7 @@ class MainActivity : ComponentActivity() {
                         }
                         //Text(" Build version: 3")
                     }
-                    Text("Build version: 第 103 次测试")
+                    Text("Build version: 第 269 次测试")
                 }
             }
         }

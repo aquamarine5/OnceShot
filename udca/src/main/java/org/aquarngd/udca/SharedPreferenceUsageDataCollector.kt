@@ -2,6 +2,7 @@ package org.aquarngd.udca
 
 import android.content.Context
 import android.content.SharedPreferences
+import android.content.SharedPreferences.Editor
 
 class SharedPreferenceUsageDataCollector(
     val context: Context,
@@ -15,14 +16,15 @@ class SharedPreferenceUsageDataCollector(
     override fun collect(key: UsageDataKey) {
         val sp = getSharedPreference()
         val editor = sp.edit()
-        key.parentKey?.forEach {
-
-            editor.putInt(it.key, sp.getInt(it.key, 0)+1)
-        }
-        editor.putInt(key.key, sp.getInt(key.key, 0)+1)
+        addCount(key,sp,editor)
         editor.apply()
     }
-
+    private fun addCount(key: UsageDataKey,sp: SharedPreferences,editor: Editor){
+        editor.putInt(key.key, sp.getInt(key.key, 0)+1)
+        key.parentKey?.forEach {
+            addCount(it,sp,editor)
+        }
+    }
     override fun outputFriendlyDataReport(): String {
         TODO("Not yet implemented")
     }

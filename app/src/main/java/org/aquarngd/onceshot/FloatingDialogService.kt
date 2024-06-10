@@ -218,7 +218,7 @@ class FloatingDialogService : Service() {
                     MotionEvent.ACTION_UP -> {
                         if (lastTouchAction == MotionEvent.ACTION_DOWN) {
                             Log.d(classTag, "performClick because of ACTION_DOWN")
-                            view.performClick()
+                            //view.performClick()
 
                             return@OnTouchListener false
                         } else {
@@ -227,7 +227,7 @@ class FloatingDialogService : Service() {
                                     classTag,
                                     "performClick because of distance < 400, ${(clickX * clickX - event.rawX * event.rawX) + (clickY * clickY - event.rawY * event.rawY)}"
                                 )
-                                view.performClick()
+                                //view.performClick()
                                 return@OnTouchListener false
                             }
                             if ((event.rawX - 20) < -20) {
@@ -305,6 +305,7 @@ class FloatingDialogService : Service() {
     private fun collectUsageData(key: UsageDataKey){
         dataCollector?.collect(key)
         analysisService.tryUpload(applicationContext)
+        val d=dataCollector?.getSharedPreference()?.getInt(key.key,-1)
         Log.d(classTag,"collect ${key.key} ${dataCollector==null} ${dataCollector?.getSharedPreference()?.getInt(key.key,-1)}")
     }
     private fun closeFloatingDialogBuiltin() {

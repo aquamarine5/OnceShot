@@ -68,16 +68,18 @@ import androidx.compose.ui.unit.sp
 import com.tencent.bugly.crashreport.CrashReport
 import org.aquarngd.onceshot.ui.theme.OnceShotTheme
 import org.aquarngd.stackbricks.StackbricksCompose
+import org.aquarngd.stackbricks.msgpvder.GithubApiMsgPvder
 import org.aquarngd.stackbricks.msgpvder.WeiboCommentsMsgPvder
 import java.util.UUID
 
 class MainActivity : ComponentActivity() {
     var status = ForegroundServiceStatus.STATUS_INIT
-    val permissionList = mutableStateMapOf(
+    private val permissionList = mutableStateMapOf(
         Manifest.permission.SYSTEM_ALERT_WINDOW to false,
         "android.permission.READ_MEDIA_IMAGES" to false,
         "android.permission.MANAGE_EXTERNAL_STORAGE" to false,
         "android.permission.MANAGE_MEDIA" to false,
+        "android.permission.POST_NOTIFICATIONS" to false,
         Manifest.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS to false
     )
     private var permissionCheckCounter = false
@@ -91,6 +93,7 @@ class MainActivity : ComponentActivity() {
         const val REQUEST_PERMISSION_IMAGE = 1002
         const val SPKEY_DURATION = "duration"
         const val SPKEY_DEVICEID = "device_id"
+        const val SPKEY_BOOT_PERMISSION="boot_permission"
         const val SPNAME = "onceshot"
         const val classTag = "MainActivity"
     }
@@ -263,8 +266,6 @@ class MainActivity : ComponentActivity() {
                         color = colorResource(id = R.color.red_zhuhong)
                     )
                 }
-
-
                 checkPermissionPassed = true
             }
         }
@@ -272,16 +273,35 @@ class MainActivity : ComponentActivity() {
                 packageName
             )
         ) {
+            permissionList[Manifest.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS] = true
+            if(permissionList[Manifest.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS] == true){
+                CreateCardButton(
+                    onClick = {
+                        startActivity(Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
+                            data = Uri.parse("package:$packageName")
+                        })
+                    },
+                    icon = painterResource(id = R.drawable.icon_battery),
+                    title = stringResource(R.string.mainwindow_requirepermission_battery_title),
+                    text = stringResource(R.string.mainwindow_requirepermission_battery_text),
+                    color = colorResource(id = R.color.red_zhuhong)
+                )
+            }
+        }
+        if(!getSharedPreferences(SPNAME,Context.MODE_PRIVATE).getBoolean(SPKEY_BOOT_PERMISSION,false)){
             CreateCardButton(
                 onClick = {
-                    startActivity(Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
-                        data = Uri.parse("package:$packageName")
+                    startActivity(Intent(Intent.ACTION_VIEW).apply {
+                        setClassName("com.android.settings","com.android.settings.InstalledAppDetails")
+                        putExtra("com.android.settings.ApplicationPkgName", packageName)
                     })
+                    getSharedPreferences(SPNAME,Context.MODE_PRIVATE).edit().putBoolean(
+                        SPKEY_BOOT_PERMISSION,true).apply()
                 },
-                icon = painterResource(id = R.drawable.icon_battery),
-                title = stringResource(R.string.mainwindow_requirepermission_battery_title),
-                text = stringResource(R.string.mainwindow_requirepermission_battery_text),
-                color = colorResource(id = R.color.red_zhuhong)
+                icon = painterResource(id = R.drawable.icon_boot),
+                title = "推荐为应用添加自启动权限",
+                text = "自启动权限可以保证 OnceShot 的持续后台运行",
+                color = colorResource(id = R.color.yellow_youcaihuahuang)
             )
         }
         return checkPermissionPassed
@@ -361,7 +381,7 @@ class MainActivity : ComponentActivity() {
                     checkPermissionPassed = drawPermissionCheckContent()
                     StackbricksCompose(
                         rememberCoroutineScope(),
-                        LocalContext.current, WeiboCommentsMsgPvder.MsgPvderID, "5001248562483153"
+                        LocalContext.current, GithubApiMsgPvder.MsgPvderID, "aquamarine5/OnceShot"
                     ).DrawCompose()
                     drawDurationSettingCard()
                     drawUsageDataShower()
@@ -473,7 +493,18 @@ class MainActivity : ComponentActivity() {
                                 Text(it.value.toString(), fontWeight = FontWeight.Bold, fontSize = 14.sp)
                             }
                         }
-                        Text("OnceShot 收集您的使用数据并每日传输至服务器，请放心，这不会泄露您的个人隐私", modifier = Modifier.padding(0.dp,5.dp), fontSize = 12.sp, lineHeight = 15.sp)
+                        Button(onClick = {
+                            for ((index,element) in AnalysisService.UPLOAD_USAGE_VALUES.withIndex()){
+                                usageDataList[index] = AnalysisDataClass(
+                                    element,
+                                    AnalysisService.USAGE_VALUES_STRING[element] ?: "",
+                                    sp.getInt(element.key, 0)
+                                )
+                            }
+                        }){
+                            Text("刷新")
+                        }
+                        //Text("OnceShot 收集您的使用数据并每日传输至服务器，请放心，这不会泄露您的个人隐私", modifier = Modifier.padding(0.dp,5.dp), fontSize = 12.sp, lineHeight = 15.sp)
 
                     }
                 }
@@ -520,7 +551,7 @@ class MainActivity : ComponentActivity() {
                             colors = CardDefaults.cardColors(colorResource(id = R.color.blue_jiqing))
                         ) {
                             Text(
-                                "v1.2 Reanimated",
+                                "v1.4 Improvement",
                                 style = TextStyle(color = Color.Yellow),
                                 modifier = Modifier.padding(5.dp, 2.dp),
                                 fontWeight = FontWeight.Bold
@@ -528,7 +559,7 @@ class MainActivity : ComponentActivity() {
                         }
                         //Text(" Build version: 3")
                     }
-                    Text("Build version: 第 269 次测试")
+                    Text("Build version: 第 417 次测试")
                 }
             }
         }
@@ -637,7 +668,6 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
-
     @Composable
     fun CreateCardButton(
         icon: Painter,

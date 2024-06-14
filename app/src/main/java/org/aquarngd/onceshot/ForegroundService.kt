@@ -165,7 +165,6 @@ class ForegroundService : Service() {
 
     private fun sendNotification(id: Long) {
         val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel =
                 NotificationChannel(notificationId, channelId, NotificationManager.IMPORTANCE_HIGH)

@@ -134,7 +134,6 @@ class FloatingDialogService : Service() {
 
     private fun onClickShareDeleteButton(contentView: View) {
         shareImage()
-
         fadeOut(contentView)
         Handler(Looper.getMainLooper()).postDelayed({
             deleteImage()

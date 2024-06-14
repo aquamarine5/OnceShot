@@ -33,6 +33,6 @@ jobs:
         sudo apt-get install tree
         tree app/build/outputs
     - name: Upload apk file
-      run: gh release upload ${{steps.version.outputs.VERSION}} app/build/outputs/apk/release/app-release-unsigned.apk
+      run: gh release upload ${{steps.version.outputs.VERSION}} app/build/outputs/apk/release/app-release.apk
       env:
         GH_TOKEN: ${{ github.token }}

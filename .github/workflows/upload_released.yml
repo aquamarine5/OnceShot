@@ -36,3 +36,4 @@ jobs:
       run: gh release upload ${{steps.version.outputs.VERSION}} app/build/outputs/apk/release/app-release.apk
       env:
         GH_TOKEN: ${{ github.token }}
+        jkspwd: ${{ secrets.JKSPWD }}

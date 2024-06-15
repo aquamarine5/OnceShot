@@ -6,10 +6,10 @@ plugins {
 android {
     signingConfigs {
         release {
-            storePassword System.getenv("jkspwd")
+            storePassword "${System.getenv("jkspwd")}"
             storeFile file('..\\keystore.jks')
             keyAlias "onceshot"
-            keyPassword System.getenv("jkspwd")
+            keyPassword "${System.getenv("jkspwd")}"
         }
     }
     namespace 'org.aquarngd.onceshot'

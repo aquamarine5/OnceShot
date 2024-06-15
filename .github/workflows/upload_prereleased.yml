@@ -25,6 +25,8 @@ jobs:
       run: chmod +x gradlew
     - name: Build apk file with Gradle
       run: ./gradlew assembleDebug
+      env:
+        jkspwd: ${{ secrets.JKSPWD }}
     - name: Get version code
       id: version
       run: echo "VERSION=${GITHUB_REF:10}" >> $GITHUB_OUTPUT

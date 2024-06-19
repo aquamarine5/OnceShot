@@ -2,6 +2,7 @@ package org.aquarngd.onceshot
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -23,10 +24,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CutCornerShape
@@ -62,15 +61,15 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.tencent.bugly.crashreport.CrashReport
 import org.aquarngd.onceshot.ui.theme.OnceShotTheme
 import org.aquarngd.stackbricks.StackbricksCompose
 import org.aquarngd.stackbricks.msgpvder.GithubApiMsgPvder
-import org.aquarngd.stackbricks.msgpvder.WeiboCommentsMsgPvder
+import java.util.Locale
 import java.util.UUID
+
 
 class MainActivity : ComponentActivity() {
     var status = ForegroundServiceStatus.STATUS_INIT
@@ -291,10 +290,67 @@ class MainActivity : ComponentActivity() {
         if(!getSharedPreferences(SPNAME,Context.MODE_PRIVATE).getBoolean(SPKEY_BOOT_PERMISSION,false)){
             CreateCardButton(
                 onClick = {
-                    startActivity(Intent(Intent.ACTION_VIEW).apply {
-                        setClassName("com.android.settings","com.android.settings.InstalledAppDetails")
-                        putExtra("com.android.settings.ApplicationPkgName", packageName)
-                    })
+                    var componentName: ComponentName? = null
+                    val brand = Build.MANUFACTURER
+                    val intent = Intent()
+                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    when (brand.lowercase(Locale.getDefault())) {
+                        "samsung" -> componentName = ComponentName(
+                            "com.samsung.android.sm",
+                            "com.samsung.android.sm.app.dashboard.SmartManagerDashBoardActivity"
+                        )
+
+                        "huawei" ->
+                            componentName = ComponentName(
+                                "com.huawei.systemmanager",
+                                "com.huawei.systemmanager.appcontrol.activity.StartupAppControlActivity"
+                            )
+
+                        "xiaomi" -> componentName = ComponentName(
+                            "com.miui.securitycenter",
+                            "com.miui.permcenter.autostart.AutoStartManagementActivity"
+                        )
+
+                        "vivo" ->
+                            componentName = ComponentName(
+                                "com.iqoo.secure",
+                                "com.iqoo.secure.ui.phoneoptimize.AddWhiteListActivity"
+                            )
+
+                        "oppo" ->
+                            componentName = ComponentName(
+                                "com.coloros.oppoguardelf",
+                                "com.coloros.powermanager.fuelgaue.PowerUsageModelActivity"
+                            )
+
+                        "yulong", "360" -> componentName = ComponentName(
+                            "com.yulong.android.coolsafe",
+                            "com.yulong.android.coolsafe.ui.activity.autorun.AutoRunListActivity"
+                        )
+
+                        "meizu" -> componentName = ComponentName(
+                            "com.meizu.safe",
+                            "com.meizu.safe.permission.SmartBGActivity"
+                        )
+
+                        "oneplus" -> componentName = ComponentName(
+                            "com.oneplus.security",
+                            "com.oneplus.security.chainlaunch.view.ChainLaunchAppListActivity"
+                        )
+
+                        "letv" -> {
+                            intent.action = "com.letv.android.permissionautoboot"
+                            intent.action = "android.settings.APPLICATION_DETAILS_SETTINGS"
+                            intent.data = Uri.fromParts("package", packageName, null)
+                        }
+
+                        else -> {
+                            intent.action = "android.settings.APPLICATION_DETAILS_SETTINGS"
+                            intent.data = Uri.fromParts("package", packageName, null)
+                        }
+
+                    }
+                    intent.component = componentName
                     getSharedPreferences(SPNAME,Context.MODE_PRIVATE).edit().putBoolean(
                         SPKEY_BOOT_PERMISSION,true).apply()
                 },
@@ -402,12 +458,15 @@ class MainActivity : ComponentActivity() {
                         text = stringResource(R.string.mainwindow_onceshot_compose_text),
                         color = colorResource(id = R.color.blue_jiqing)
                     )
-                    CreateCard(
+                    CreateCardButton(
                         icon = painterResource(id = R.drawable.onceshot_logo),
                         title = stringResource(R.string.mainwindow_onceshot_creation_title),
                         text = stringResource(R.string.mainwindow_onceshot_creation_text),
                         color = colorResource(id = R.color.blue_jiqing)
-                    )
+                    ){
+                        startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/aquamarine5/OnceShot")))
+                    }
+
                 }
             }
         }

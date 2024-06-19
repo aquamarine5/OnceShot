@@ -24,6 +24,7 @@
     <uses-permission android:name="MediaStore.Images.Media.INTERNAL_CONTENT_URI" />
     <uses-permission android:name="MediaStore.Images.Media.EXTERNAL_CONTENT_URI" />
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE"/>
 
     <application
         android:allowBackup="true"
@@ -71,6 +72,7 @@
             android:name=".ForegroundService"
             android:exported="false"
             android:label="ForegroundService"
+            android:foregroundServiceType="specialUse"
             android:launchMode="singleTop" />
         <!-- Required: set your sentry.io project identifier (DSN) -->
         <meta-data android:name="io.sentry.dsn" android:value="https://ab6dc78fdf7748d540a0ccf4815de194@o4505418205364224.ingest.us.sentry.io/4506881518338048" />

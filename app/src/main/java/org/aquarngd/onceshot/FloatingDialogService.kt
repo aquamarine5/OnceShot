@@ -27,37 +27,31 @@ import com.google.android.material.button.MaterialButton
 import com.google.android.material.textview.MaterialTextView
 import org.aquarngd.udca.SharedPreferenceUsageDataCollector
 import org.aquarngd.udca.UsageDataKey
+import java.util.UUID
 
 
 class FloatingDialogService : Service() {
     private val handler = Handler(Looper.getMainLooper())
-    private val closeFloatingDialogRunnable = Runnable {
-        closeFloatingDialogBuiltin()
-    }
-    private val showTipsRunnable = Runnable {
-        contentView?.findViewById<MaterialTextView>(R.id.text_title)?.text=getText(R.string.floatingdialog_tips)
-        val windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
-        if (contentView != null) {
-            windowManager.updateViewLayout(contentView!!, contentView!!.layoutParams)
-        }
-    }
     private var dataCollector:SharedPreferenceUsageDataCollector?=null
     private val analysisService=AnalysisService()
+    private val eventMap= mutableMapOf<String,ScreenshotEventData>()
 
     companion object {
         const val classTag = "FloatingDialogService"
-        const val intent_type_id = "intent_extras_data_type"
-        const val intent_path_id = "intent_extras_data_path"
-        const val intent_uri_id = "intent_extras_data_uri"
+        const val INTENT_EXTRAS_TYPE = "intent_extras_data_type"
+        const val INTENT_EXTRAS_PATH = "intent_extras_data_path"
+        const val INTENT_EXTRAS_URI = "intent_extras_data_uri"
+        const val INTENT_EXTRAS_EVENTID = "intent_extras_data_event_id"
         const val INTENT_DEFAULT = 0
         const val INTENT_SHARE_DELETE = 1
         const val INTENT_DELETE_DIRECTLY = 11
         const val INTENT_SHOW_FLOATINGWINDOW = 2
-        const val INTENT_CLOSE_FLOATINGWINDOW = 3
+        //const val INTENT_CLOSE_FLOATINGWINDOW = 3
     }
 
     private var uri: Uri? = null
-    private var contentView: View? = null
+
+    //private var contentView: View? = null
     override fun onBind(intent: Intent?): IBinder? {
         return null
     }
@@ -65,13 +59,13 @@ class FloatingDialogService : Service() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         Log.i(
             classTag, "Received intent: " + intent?.getIntExtra(
-                intent_type_id,
+                INTENT_EXTRAS_TYPE,
                 INTENT_DEFAULT
             )
         )
         if (intent != null) {
             dataCollector= SharedPreferenceUsageDataCollector(applicationContext)
-            val id = intent.getLongExtra(intent_uri_id, -1)
+            val id = intent.getLongExtra(INTENT_EXTRAS_URI, -1)
             if (id == -1L) {
                 Log.e(classTag, "Id is null!")
             } else {
@@ -81,7 +75,7 @@ class FloatingDialogService : Service() {
                 )
             }
             when (intent.getIntExtra(
-                intent_type_id,
+                INTENT_EXTRAS_TYPE,
                 INTENT_DEFAULT
             )) {
                 INTENT_SHOW_FLOATINGWINDOW -> {
@@ -92,23 +86,15 @@ class FloatingDialogService : Service() {
                 INTENT_DEFAULT -> {
                     Log.w(classTag, "Received default start intent.")
                 }
-
-                INTENT_CLOSE_FLOATINGWINDOW -> {
-                    closeFloatingWindow()
-                    //collectUsageData(AnalysisDataKey.CLICK_CLOSE)
-                }
             }
         }
         return super.onStartCommand(intent, flags, startId)
     }
 
-    private fun closeFloatingWindow() {
-        if (contentView != null) {
-            val windowManager = getSystemService(Context.WINDOW_SERVICE) as WindowManager
-            windowManager.removeView(contentView)
-            Log.d(classTag,"removeView")
-            contentView = null
-        }
+    private fun closeFloatingWindow(view: View) {
+        val windowManager = getSystemService(Context.WINDOW_SERVICE) as WindowManager
+        windowManager.removeView(view)
+        Log.d(classTag,"removeView")
         stopSelf()
     }
 
@@ -132,9 +118,9 @@ class FloatingDialogService : Service() {
             })
     }
 
-    private fun onClickShareDeleteButton(contentView: View) {
+    private fun onClickShareDeleteButton(view: View,id:String) {
         shareImage()
-        fadeOut(contentView)
+        fadeOut(view,id)
         Handler(Looper.getMainLooper()).postDelayed({
             deleteImage()
         }, getDuration() * 1000L)
@@ -166,6 +152,7 @@ class FloatingDialogService : Service() {
     }
 
     private fun createFloatingWindow() {
+        val id=UUID.randomUUID().toString()
         val windowManager = getSystemService(Context.WINDOW_SERVICE) as WindowManager
         val windowParams = WindowManager.LayoutParams().apply {
             gravity = Gravity.START or Gravity.TOP
@@ -181,8 +168,8 @@ class FloatingDialogService : Service() {
                     or WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE)
             format = PixelFormat.TRANSPARENT
         }
-        contentView = LayoutInflater.from(this).inflate(R.layout.activity_floating_dialog, null)
-        contentView!!.apply {
+        val view = LayoutInflater.from(this).inflate(R.layout.activity_floating_dialog, null)
+        view!!.apply {
             var lastTouchAction = -1
             var clickX = 0f
             var clickY = 0f
@@ -230,7 +217,7 @@ class FloatingDialogService : Service() {
                                 return@OnTouchListener false
                             }
                             if ((event.rawX - 20) < -20) {
-                                fadeOutSlided(this)
+                                fadeOutSlided(this,id)
                                 windowManager.updateViewLayout(this, lp)
                                 return@OnTouchListener true
                             } else {
@@ -270,21 +257,21 @@ class FloatingDialogService : Service() {
             val btnOk = findViewById<MaterialButton>(R.id.btn_waiting_ok)
             val btnIgnore = findViewById<MaterialButton>(R.id.btn_waiting_ignore)
             btnWaiting?.setOnClickListener {
-                onClickWaitingButton()
+                onClickWaitingButton(view,id)
             }
             btnClose?.setOnClickListener {
-                fadeOut(this)
+                fadeOut(this,id)
                 collectUsageData(AnalysisDataKey.CLICK_CLOSE)
             }
             btnDeleteDirectly?.setOnClickListener {
                 Log.d(classTag, "Call INTENT_DELETE_DIRECTLY")
                 deleteImage()
-                fadeOut(this)
+                fadeOut(this,id)
                 collectUsageData(AnalysisDataKey.CLICK_DELETE_DIRECTLY)
             }
             btnDeleteShare?.setOnClickListener {
                 Log.d(classTag, "Call INTENT_SHARE_DELETE")
-                onClickShareDeleteButton(this)
+                onClickShareDeleteButton(this,id)
                 collectUsageData(AnalysisDataKey.CLICK_DELETE_AFTER_SHARE)
             }
             btnWaiting.setOnTouchListener(onTouchListener)
@@ -296,9 +283,18 @@ class FloatingDialogService : Service() {
             setOnTouchListener(onTouchListener)
             fadeIn(this)
         }
-        windowManager.addView(contentView, windowParams)
+        windowManager.addView(view, windowParams)
+        val closeFloatingDialogRunnable = Runnable {
+            fadeOut(view, id)
+            collectUsageData(AnalysisDataKey.TIMEOUT_CLOSE)
+        }
+        val showTipsRunnable = Runnable {
+            view.findViewById<MaterialTextView>(R.id.text_title)?.text=getText(R.string.floatingdialog_tips)
+            windowManager.updateViewLayout(view, view.layoutParams)
+        }
         handler.postDelayed(closeFloatingDialogRunnable, 15 * 1000L)
         handler.postDelayed(showTipsRunnable, 5 * 1000L)
+        eventMap[id] = ScreenshotEventData(id,view,closeFloatingDialogRunnable,showTipsRunnable)
         Log.d(classTag, "Create FloatingDialog successfully.")
     }
     private fun collectUsageData(key: UsageDataKey){
@@ -307,51 +303,45 @@ class FloatingDialogService : Service() {
         val d=dataCollector?.getSharedPreference()?.getInt(key.key,-1)
         Log.d(classTag,"collect ${key.key} ${dataCollector==null} ${dataCollector?.getSharedPreference()?.getInt(key.key,-1)}")
     }
-    private fun closeFloatingDialogBuiltin() {
-        if (contentView != null) {
-            fadeOut(contentView!!)
-            collectUsageData(AnalysisDataKey.TIMEOUT_CLOSE)
+    private fun removeRunnableCallbacks(id:String){
+        if(eventMap[id]!=null){
+            handler.removeCallbacks(eventMap[id]!!.closeRunnable)
+            handler.removeCallbacks(eventMap[id]!!.timeoutRunnable)
         }
     }
-
-    private fun onClickWaitingButton() {
-        handler.removeCallbacks(closeFloatingDialogRunnable)
-        handler.removeCallbacks(showTipsRunnable)
-        clearFloatingDialog()
-        if (contentView != null) {
-            contentView!!.apply {
-                val windowManager = getSystemService(Context.WINDOW_SERVICE) as WindowManager
-                val btnOk = findViewById<MaterialButton>(R.id.btn_waiting_ok)
-                val btnIgnore = findViewById<MaterialButton>(R.id.btn_waiting_ignore)
-                val textTips = findViewById<MaterialTextView>(R.id.text_tips)
-                textTips.text = context.getString(R.string.floatingdialog_tips_alreadywaiting)
-                btnOk.visibility = View.VISIBLE
-                btnIgnore.visibility = View.VISIBLE
-                windowManager.updateViewLayout(this, this.layoutParams)
-                btnOk.setOnClickListener {
-                    Log.d(classTag, "Call INTENT_DELETE_DIRECTLY on waiting panel")
-                    deleteImage()
-                    fadeOut(this,AnalysisDataKey.CLICK_WAITING_DELETE)
-                }
-                btnIgnore.setOnClickListener {
-                    fadeOut(this,AnalysisDataKey.CLICK_WAITING_IGNORE)
-                }
+    private fun onClickWaitingButton(view:View,id:String) {
+        removeRunnableCallbacks(id)
+        clearFloatingDialog(view)
+        view.apply {
+            val windowManager = getSystemService(Context.WINDOW_SERVICE) as WindowManager
+            val btnOk = findViewById<MaterialButton>(R.id.btn_waiting_ok)
+            val btnIgnore = findViewById<MaterialButton>(R.id.btn_waiting_ignore)
+            val textTips = findViewById<MaterialTextView>(R.id.text_tips)
+            textTips.text = context.getString(R.string.floatingdialog_tips_alreadywaiting)
+            btnOk.visibility = View.VISIBLE
+            btnIgnore.visibility = View.VISIBLE
+            windowManager.updateViewLayout(this, this.layoutParams)
+            btnOk.setOnClickListener {
+                Log.d(classTag, "Call INTENT_DELETE_DIRECTLY on waiting panel")
+                deleteImage()
+                fadeOut(this,AnalysisDataKey.CLICK_WAITING_DELETE,id)
+            }
+            btnIgnore.setOnClickListener {
+                fadeOut(this,AnalysisDataKey.CLICK_WAITING_IGNORE,id)
             }
         }
     }
 
-    private fun clearFloatingDialog() {
-        if (contentView != null) {
-            contentView!!.apply {
-                val btnDeleteDirectly = findViewById<MaterialButton>(R.id.btn_delete_directly)
-                val btnDeleteShare = findViewById<MaterialButton>(R.id.btn_delete_after_share)
-                val btnClose = findViewById<MaterialButton>(R.id.btn_close)
-                val btnWaiting = findViewById<MaterialButton>(R.id.btn_waiting)
-                btnWaiting.visibility = View.GONE
-                btnDeleteShare.visibility = View.GONE
-                btnClose.visibility = View.GONE
-                btnDeleteDirectly.visibility = View.GONE
-            }
+    private fun clearFloatingDialog(view:View) {
+        view.apply {
+            val btnDeleteDirectly = findViewById<MaterialButton>(R.id.btn_delete_directly)
+            val btnDeleteShare = findViewById<MaterialButton>(R.id.btn_delete_after_share)
+            val btnClose = findViewById<MaterialButton>(R.id.btn_close)
+            val btnWaiting = findViewById<MaterialButton>(R.id.btn_waiting)
+            btnWaiting.visibility = View.GONE
+            btnDeleteShare.visibility = View.GONE
+            btnClose.visibility = View.GONE
+            btnDeleteDirectly.visibility = View.GONE
         }
     }
 
@@ -364,9 +354,8 @@ class FloatingDialogService : Service() {
         }
     }
 
-    private fun fadeOutSlided(view: View) {
-        handler.removeCallbacks(closeFloatingDialogRunnable)
-        handler.removeCallbacks(showTipsRunnable)
+    private fun fadeOutSlided(view: View,id:String) {
+        removeRunnableCallbacks(id)
         view.apply {
             animate().apply {
                 alpha(0f)
@@ -375,7 +364,7 @@ class FloatingDialogService : Service() {
                 duration = 200
                 setListener(object : AnimatorListenerAdapter() {
                     override fun onAnimationEnd(animation: Animator) {
-                        closeFloatingWindow()
+                        closeFloatingWindow(view)
                         super.onAnimationEnd(animation)
                     }
                 })
@@ -383,7 +372,7 @@ class FloatingDialogService : Service() {
         }
     }
 
-    private fun fadeOut(view: View) {
+    private fun fadeOut(view: View,id:String) {
         view.apply {
             findViewById<LinearLayout>(R.id.linear_layout)!!.animate().apply {
                 alpha(0f)
@@ -391,18 +380,17 @@ class FloatingDialogService : Service() {
                 duration = 200
                 setListener(object : AnimatorListenerAdapter() {
                     override fun onAnimationEnd(animation: Animator) {
-                        closeFloatingWindow()
+                        closeFloatingWindow(view)
                         super.onAnimationEnd(animation)
                     }
                 })
             }
         }
-        handler.removeCallbacks(closeFloatingDialogRunnable)
-        handler.removeCallbacks(showTipsRunnable)
+        removeRunnableCallbacks(id)
     }
 
-    private fun fadeOut(view: View,usageDataKey: UsageDataKey){
-        fadeOut(view)
+    private fun fadeOut(view: View,usageDataKey: UsageDataKey,id:String){
+        fadeOut(view,id)
         collectUsageData(usageDataKey)
     }
 }

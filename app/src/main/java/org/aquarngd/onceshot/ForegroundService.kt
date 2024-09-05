@@ -56,7 +56,9 @@ class ForegroundService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        Log.i(classTag, "Received intent: " + intent?.getIntExtra(intent_type_id, INTENT_DEFAULT))
+        if(intent===null)
+            return START_NOT_STICKY
+        Log.i(classTag, "Received intent: " + intent.getIntExtra(intent_type_id, INTENT_DEFAULT))
         if (!isLive) {
             isLive = true
             startFileObserver()

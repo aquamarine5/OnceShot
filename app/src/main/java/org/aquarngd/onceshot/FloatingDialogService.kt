@@ -304,7 +304,6 @@ class FloatingDialogService : Service() {
     private fun collectUsageData(key: UsageDataKey){
         dataCollector?.collect(key)
         analysisService.tryUpload(applicationContext)
-        val d=dataCollector?.getSharedPreference()?.getInt(key.key,-1)
         Log.d(classTag,"collect ${key.key} ${dataCollector==null} ${dataCollector?.getSharedPreference()?.getInt(key.key,-1)}")
     }
     private fun closeFloatingDialogBuiltin() {

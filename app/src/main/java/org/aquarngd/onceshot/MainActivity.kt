@@ -1,7 +1,9 @@
 package org.aquarngd.onceshot
 
+import androidx.compose.runtime.*
 import android.Manifest
 import android.annotation.SuppressLint
+import android.app.ActivityManager
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -44,10 +46,8 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -70,6 +70,7 @@ import org.aquarngd.onceshot.ui.theme.OnceShotTheme
 import org.aquarngd.stackbricks.StackbricksCompose
 import org.aquarngd.stackbricks.msgpvder.GithubApiMsgPvder
 import org.aquarngd.stackbricks.msgpvder.WeiboCommentsMsgPvder
+import org.aquarngd.udca.UsageDataKey
 import java.util.UUID
 
 class MainActivity : ComponentActivity() {
@@ -108,10 +109,20 @@ class MainActivity : ComponentActivity() {
                 deviceID = getDeviceUniqueId()
             })
         setContent {
-            drawMainContent()
+            DrawMainContent()
+        }
+        hideAppWindow(applicationContext)
+
+    }
+    private fun hideAppWindow(context: Context){
+        try{
+            val activityManager:ActivityManager=context.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
+            activityManager.appTasks[0].setExcludeFromRecents(true)
+        }
+        catch (ex:Exception){
+
         }
     }
-
     override fun onResume() {
         refreshPermissionCheckContent()
         super.onResume()
@@ -309,7 +320,7 @@ class MainActivity : ComponentActivity() {
 
     @SuppressLint("BatteryLife")
     @Composable
-    fun drawMainContent() {
+    fun DrawMainContent() {
         val animatedOnceShotBackgroundColor by animateColorAsState(
             targetValue = onceShotBackgroundColor,
             tween(500), label = "an imatedOnceShotBackgroundColor"
@@ -377,14 +388,14 @@ class MainActivity : ComponentActivity() {
                             }
                         }
                     }
-                    drawDebugVersionCard()
+                    DrawDebugVersionCard()
                     checkPermissionPassed = drawPermissionCheckContent()
                     StackbricksCompose(
                         rememberCoroutineScope(),
                         LocalContext.current, GithubApiMsgPvder.MsgPvderID, "aquamarine5/OnceShot"
                     ).DrawCompose()
-                    drawDurationSettingCard()
-                    drawUsageDataShower()
+                    DrawDurationSettingCard()
+                    DrawUsageDataShower()
                     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
                         CreateCard(
                             icon = painterResource(id = R.drawable.icon_android),
@@ -446,8 +457,9 @@ class MainActivity : ComponentActivity() {
         return true
     }
 
+    @SuppressLint("UnrememberedMutableState")
     @Composable
-    fun drawUsageDataShower() {
+    fun DrawUsageDataShower() {
         val usageDataList = mutableStateListOf<AnalysisDataClass>()
         val sp = getSharedPreferences("UDCA_SP", Context.MODE_PRIVATE)
         AnalysisService.UPLOAD_USAGE_VALUES.forEach {
@@ -513,7 +525,7 @@ class MainActivity : ComponentActivity() {
     }
 
     @Composable
-    fun drawDebugVersionCard() {
+    fun DrawDebugVersionCard() {
         Card(
             shape = RoundedCornerShape(18.dp),
             colors = CardDefaults.cardColors(colorResource(id = R.color.yellow_youcaihuahuang)),
@@ -566,7 +578,7 @@ class MainActivity : ComponentActivity() {
     }
 
     @Composable
-    fun drawDurationSettingCard() {
+    fun DrawDurationSettingCard() {
         Card(
             shape = RoundedCornerShape(18.dp),
             modifier = Modifier
@@ -710,7 +722,7 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    fun requestOverlayDisplayPermission() {
+    private fun requestOverlayDisplayPermission() {
         startActivity(
             Intent(
                 Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
@@ -730,17 +742,6 @@ fun GreetingPreview() {
             //modifier = Modifier.fillMaxSize(),
             color = MaterialTheme.colorScheme.background
         ) {
-            val usageDataList = mutableStateListOf<AnalysisDataClass>()
-            val sp = a.getSharedPreferences("UDCA_SP", Context.MODE_PRIVATE)
-            AnalysisService.UPLOAD_USAGE_VALUES.forEach {
-                usageDataList.add(
-                    AnalysisDataClass(
-                        it,
-                        AnalysisService.USAGE_VALUES_STRING[it] ?: "",
-                        sp.getInt(it.key, 0)
-                    )
-                )
-            }
             Column {
                 a.apply {
                     Card(
@@ -760,7 +761,7 @@ fun GreetingPreview() {
                                 .padding(10.dp, 0.dp, 20.dp, 0.dp)
                             //.size(35.dp)
                             Icon(
-                                painter = painterResource(id = R.drawable.icon_usage_info),
+                                painter = painterResource(id = R.drawable.icon_accessibility),
                                 contentDescription = "",
                                 modifier = iconModifier,
                                 tint = Color.Unspecified
@@ -768,13 +769,7 @@ fun GreetingPreview() {
                             Column(
                                 horizontalAlignment = Alignment.Start,
                             ) {
-                                Text("使用情况数据分析", fontWeight = FontWeight.Bold)
-
-                                LazyColumn {
-                                    items(count = usageDataList.size) {
-                                        Text("${usageDataList[it].str}: ${usageDataList[it].value}")
-                                    }
-                                }
+                                Text("是否启用增强后台运行方案", fontWeight = FontWeight.Bold)
 
                             }
                         }

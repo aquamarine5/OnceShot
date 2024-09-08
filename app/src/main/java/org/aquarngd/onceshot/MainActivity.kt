@@ -1,8 +1,9 @@
 package org.aquarngd.onceshot
 
+import androidx.compose.runtime.*
 import android.Manifest
 import android.annotation.SuppressLint
-import android.content.ComponentName
+import android.app.ActivityManager
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -24,8 +25,10 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CutCornerShape
@@ -39,14 +42,13 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -61,15 +63,16 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.tencent.bugly.crashreport.CrashReport
 import org.aquarngd.onceshot.ui.theme.OnceShotTheme
 import org.aquarngd.stackbricks.StackbricksCompose
 import org.aquarngd.stackbricks.msgpvder.GithubApiMsgPvder
-import java.util.Locale
+import org.aquarngd.stackbricks.msgpvder.WeiboCommentsMsgPvder
+import org.aquarngd.udca.UsageDataKey
 import java.util.UUID
-
 
 class MainActivity : ComponentActivity() {
     var status = ForegroundServiceStatus.STATUS_INIT
@@ -85,14 +88,15 @@ class MainActivity : ComponentActivity() {
     private var onceShotIcon by mutableStateOf(R.drawable.icon_service_start)
     private var onceShotTitle by mutableStateOf("OnceShot 服务已经启动")
     private var onceShotText by mutableStateOf("点击停止")
-    private var onceShotBackgroundColor by mutableStateOf(Color(81,196,211))
+    private var onceShotBackgroundColor by mutableStateOf(Color(81, 196, 211))
 
     companion object {
         const val REQUEST_PERMISSION_NOF = 1001
         const val REQUEST_PERMISSION_IMAGE = 1002
         const val SPKEY_DURATION = "duration"
         const val SPKEY_DEVICEID = "device_id"
-        const val SPKEY_BOOT_PERMISSION="boot_permission"
+        const val SPKEY_BOOT_PERMISSION = "boot_permission"
+        const val SPKEY_ACCESSIBILITY = "accessibility"
         const val SPNAME = "onceshot"
         const val classTag = "MainActivity"
     }
@@ -107,7 +111,19 @@ class MainActivity : ComponentActivity() {
                 deviceID = getDeviceUniqueId()
             })
         setContent {
-            drawMainContent()
+            DrawMainContent()
+        }
+        hideAppWindow(applicationContext)
+
+    }
+
+    private fun hideAppWindow(context: Context) {
+        try {
+            val activityManager: ActivityManager =
+                context.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
+            activityManager.appTasks[0].setExcludeFromRecents(true)
+        } catch (ex: Exception) {
+
         }
     }
 
@@ -156,10 +172,10 @@ class MainActivity : ComponentActivity() {
 
             if (checkPermissionStatus) {
                 launchService()
-                onceShotIcon=R.drawable.icon_service_start
-                onceShotTitle="OnceShot 服务已经启动"
-                onceShotText="点击停止"
-                onceShotBackgroundColor=Color(getColor(R.color.teal_200))
+                onceShotIcon = R.drawable.icon_service_start
+                onceShotTitle = "OnceShot 服务已经启动"
+                onceShotText = "点击停止"
+                onceShotBackgroundColor = Color(getColor(R.color.teal_200))
             } else {
                 Toast.makeText(applicationContext, "权限还没有全部授权！", Toast.LENGTH_SHORT).show()
             }
@@ -273,7 +289,7 @@ class MainActivity : ComponentActivity() {
             )
         ) {
             permissionList[Manifest.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS] = true
-            if(permissionList[Manifest.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS] == true){
+            if (permissionList[Manifest.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS] == true) {
                 CreateCardButton(
                     onClick = {
                         startActivity(Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
@@ -287,72 +303,21 @@ class MainActivity : ComponentActivity() {
                 )
             }
         }
-        if(!getSharedPreferences(SPNAME,Context.MODE_PRIVATE).getBoolean(SPKEY_BOOT_PERMISSION,false)){
+        if (!getSharedPreferences(SPNAME, Context.MODE_PRIVATE).getBoolean(
+                SPKEY_BOOT_PERMISSION,
+                false
+            )
+        ) {
             CreateCardButton(
                 onClick = {
-                    var componentName: ComponentName? = null
-                    val brand = Build.MANUFACTURER
-                    val intent = Intent()
-                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                    when (brand.lowercase(Locale.getDefault())) {
-                        "samsung" -> componentName = ComponentName(
-                            "com.samsung.android.sm",
-                            "com.samsung.android.sm.app.dashboard.SmartManagerDashBoardActivity"
-                        )
-
-                        "huawei" ->
-                            componentName = ComponentName(
-                                "com.huawei.systemmanager",
-                                "com.huawei.systemmanager.appcontrol.activity.StartupAppControlActivity"
-                            )
-
-                        "xiaomi" -> componentName = ComponentName(
-                            "com.miui.securitycenter",
-                            "com.miui.permcenter.autostart.AutoStartManagementActivity"
-                        )
-
-                        "vivo" ->
-                            componentName = ComponentName(
-                                "com.iqoo.secure",
-                                "com.iqoo.secure.ui.phoneoptimize.AddWhiteListActivity"
-                            )
-
-                        "oppo" ->
-                            componentName = ComponentName(
-                                "com.coloros.oppoguardelf",
-                                "com.coloros.powermanager.fuelgaue.PowerUsageModelActivity"
-                            )
-
-                        "yulong", "360" -> componentName = ComponentName(
-                            "com.yulong.android.coolsafe",
-                            "com.yulong.android.coolsafe.ui.activity.autorun.AutoRunListActivity"
-                        )
-
-                        "meizu" -> componentName = ComponentName(
-                            "com.meizu.safe",
-                            "com.meizu.safe.permission.SmartBGActivity"
-                        )
-
-                        "oneplus" -> componentName = ComponentName(
-                            "com.oneplus.security",
-                            "com.oneplus.security.chainlaunch.view.ChainLaunchAppListActivity"
-                        )
-
-                        "letv" -> {
-                            intent.action = "com.letv.android.permissionautoboot"
-                            intent.action = "android.settings.APPLICATION_DETAILS_SETTINGS"
-                            intent.data = Uri.fromParts("package", packageName, null)
-                        }
-
-                        else -> {
-                            intent.action = "android.settings.APPLICATION_DETAILS_SETTINGS"
-                            intent.data = Uri.fromParts("package", packageName, null)
-                        }
-
-                    }
-                    intent.component = componentName
-                    getSharedPreferences(SPNAME,Context.MODE_PRIVATE).edit().putBoolean(
-                        SPKEY_BOOT_PERMISSION,true).apply()
+                    startActivity(Intent().apply {
+                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                        action = "android.settings.APPLICATION_DETAILS_SETTINGS"
+                        data = Uri.fromParts("package",packageName,null)
+                    })
+                    getSharedPreferences(SPNAME, Context.MODE_PRIVATE).edit().putBoolean(
+                        SPKEY_BOOT_PERMISSION, true
+                    ).apply()
                 },
                 icon = painterResource(id = R.drawable.icon_boot),
                 title = "推荐为应用添加自启动权限",
@@ -365,7 +330,7 @@ class MainActivity : ComponentActivity() {
 
     @SuppressLint("BatteryLife")
     @Composable
-    fun drawMainContent() {
+    fun DrawMainContent() {
         val animatedOnceShotBackgroundColor by animateColorAsState(
             targetValue = onceShotBackgroundColor,
             tween(500), label = "an imatedOnceShotBackgroundColor"
@@ -433,14 +398,15 @@ class MainActivity : ComponentActivity() {
                             }
                         }
                     }
-                    drawDebugVersionCard()
                     checkPermissionPassed = drawPermissionCheckContent()
+                    DrawDebugVersionCard()
                     StackbricksCompose(
                         rememberCoroutineScope(),
                         LocalContext.current, GithubApiMsgPvder.MsgPvderID, "aquamarine5/OnceShot"
                     ).DrawCompose()
-                    drawDurationSettingCard()
-                    drawUsageDataShower()
+                    DrawAccessibilitySwitch()
+                    DrawDurationSettingCard()
+                    DrawUsageDataShower()
                     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
                         CreateCard(
                             icon = painterResource(id = R.drawable.icon_android),
@@ -458,15 +424,12 @@ class MainActivity : ComponentActivity() {
                         text = stringResource(R.string.mainwindow_onceshot_compose_text),
                         color = colorResource(id = R.color.blue_jiqing)
                     )
-                    CreateCardButton(
+                    CreateCard(
                         icon = painterResource(id = R.drawable.onceshot_logo),
                         title = stringResource(R.string.mainwindow_onceshot_creation_title),
                         text = stringResource(R.string.mainwindow_onceshot_creation_text),
                         color = colorResource(id = R.color.blue_jiqing)
-                    ){
-                        startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/aquamarine5/OnceShot")))
-                    }
-
+                    )
                 }
             }
         }
@@ -478,11 +441,83 @@ class MainActivity : ComponentActivity() {
             status = ForegroundServiceStatus.STATUS_PERMISSION_MISSING
         } else {
             launchService()
-            onceShotIcon=R.drawable.icon_service_start
-            onceShotTitle="OnceShot 服务已经启动"
-            onceShotText="点击停止"
-            onceShotBackgroundColor=Color(getColor(R.color.teal_200))
+            onceShotIcon = R.drawable.icon_service_start
+            onceShotTitle = "OnceShot 服务已经启动"
+            onceShotText = "点击停止"
+            onceShotBackgroundColor = Color(getColor(R.color.teal_200))
             status = ForegroundServiceStatus.STATUS_RUNNING
+        }
+    }
+
+    @Composable
+    private fun DrawAccessibilitySwitch() {
+        var status by remember {
+            mutableStateOf(
+                getSharedPreferences(SPNAME, MODE_PRIVATE).getBoolean(
+                    SPKEY_ACCESSIBILITY, false
+                )
+            )
+        }
+        Card(
+            shape = RoundedCornerShape(18.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(10.dp)
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Start,
+                modifier = Modifier
+                    .padding(22.dp, 15.dp)
+                    .fillMaxWidth()
+            ) {
+                val iconModifier = Modifier
+                    .padding(10.dp, 0.dp, 20.dp, 0.dp)
+                //.size(35.dp)
+                Icon(
+                    painter = painterResource(id = R.drawable.icon_accessibility),
+                    contentDescription = "",
+                    modifier = iconModifier,
+                    tint = Color.Unspecified
+                )
+                Column(
+                    horizontalAlignment = Alignment.Start,
+                ) {
+                    Text("启用增强后台运行方案", fontWeight = FontWeight.Bold)
+                }
+                Switch(
+                    enabled = false,
+                    checked = status,
+                    onCheckedChange = {
+                        Toast.makeText(applicationContext,"暂不可用",Toast.LENGTH_SHORT).show()
+                        /*
+                        status = it
+                        if (it) {
+                            stopService(Intent(applicationContext, ForegroundService::class.java))
+                            launchAccessibilityService()
+                        } else {
+                            stopService(
+                                Intent(
+                                    applicationContext,
+                                    ActivityAccessibilityService::class.java
+                                )
+                            )
+                            launchService()
+                        }
+                        getSharedPreferences(SPNAME, MODE_PRIVATE).edit().putBoolean(
+                            SPKEY_ACCESSIBILITY,it).apply()
+
+                         */
+                    },
+                    modifier = Modifier.weight(70f)
+                )
+            }
+            Text("使用无障碍服务作为后台保活的增强后台运行方案暂不稳定，请期待后续更新",
+                modifier = Modifier.padding(20.dp,0.dp,10.dp,10.dp),
+                fontSize = 12.sp,
+                lineHeight = 15.sp,
+                color = Color.Gray
+            )
         }
     }
 
@@ -505,8 +540,23 @@ class MainActivity : ComponentActivity() {
         return true
     }
 
+    private fun launchAccessibilityService(): Boolean {
+        try {
+            Intent(this, ActivityAccessibilityService::class.java).apply {
+                startService(this)
+            }
+        } catch (ex: Exception) {
+            status = ForegroundServiceStatus.STATUS_EXCEPTION
+            return false
+        } finally {
+            status = ForegroundServiceStatus.STATUS_RUNNING
+        }
+        return true
+    }
+
+    @SuppressLint("UnrememberedMutableState")
     @Composable
-    fun drawUsageDataShower() {
+    fun DrawUsageDataShower() {
         val usageDataList = mutableStateListOf<AnalysisDataClass>()
         val sp = getSharedPreferences("UDCA_SP", Context.MODE_PRIVATE)
         AnalysisService.UPLOAD_USAGE_VALUES.forEach {
@@ -546,21 +596,25 @@ class MainActivity : ComponentActivity() {
                     ) {
                         Text("使用情况数据分析", fontWeight = FontWeight.Bold)
 
-                        usageDataList.forEach{
-                            Row{
+                        usageDataList.forEach {
+                            Row {
                                 Text("${it.str}: ", fontSize = 14.sp)
-                                Text(it.value.toString(), fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                                Text(
+                                    it.value.toString(),
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 14.sp
+                                )
                             }
                         }
                         Button(onClick = {
-                            for ((index,element) in AnalysisService.UPLOAD_USAGE_VALUES.withIndex()){
+                            for ((index, element) in AnalysisService.UPLOAD_USAGE_VALUES.withIndex()) {
                                 usageDataList[index] = AnalysisDataClass(
                                     element,
                                     AnalysisService.USAGE_VALUES_STRING[element] ?: "",
                                     sp.getInt(element.key, 0)
                                 )
                             }
-                        }){
+                        }) {
                             Text("刷新")
                         }
                         //Text("OnceShot 收集您的使用数据并每日传输至服务器，请放心，这不会泄露您的个人隐私", modifier = Modifier.padding(0.dp,5.dp), fontSize = 12.sp, lineHeight = 15.sp)
@@ -572,7 +626,7 @@ class MainActivity : ComponentActivity() {
     }
 
     @Composable
-    fun drawDebugVersionCard() {
+    fun DrawDebugVersionCard() {
         Card(
             shape = RoundedCornerShape(18.dp),
             colors = CardDefaults.cardColors(colorResource(id = R.color.yellow_youcaihuahuang)),
@@ -625,7 +679,7 @@ class MainActivity : ComponentActivity() {
     }
 
     @Composable
-    fun drawDurationSettingCard() {
+    fun DrawDurationSettingCard() {
         Card(
             shape = RoundedCornerShape(18.dp),
             modifier = Modifier
@@ -727,6 +781,7 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
+
     @Composable
     fun CreateCardButton(
         icon: Painter,
@@ -769,7 +824,7 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    fun requestOverlayDisplayPermission() {
+    private fun requestOverlayDisplayPermission() {
         startActivity(
             Intent(
                 Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
@@ -784,22 +839,12 @@ class MainActivity : ComponentActivity() {
 fun GreetingPreview() {
     OnceShotTheme {
         val a = MainActivity()
+        var status: Boolean = remember { false }
         // A surface container using the 'background' color from the theme
         Surface(
             //modifier = Modifier.fillMaxSize(),
             color = MaterialTheme.colorScheme.background
         ) {
-            val usageDataList = mutableStateListOf<AnalysisDataClass>()
-            val sp = a.getSharedPreferences("UDCA_SP", Context.MODE_PRIVATE)
-            AnalysisService.UPLOAD_USAGE_VALUES.forEach {
-                usageDataList.add(
-                    AnalysisDataClass(
-                        it,
-                        AnalysisService.USAGE_VALUES_STRING[it] ?: "",
-                        sp.getInt(it.key, 0)
-                    )
-                )
-            }
             Column {
                 a.apply {
                     Card(
@@ -812,14 +857,14 @@ fun GreetingPreview() {
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.Start,
                             modifier = Modifier
-                                .padding(22.dp, 15.dp)
+                                .padding(22.dp, 15.dp,22.dp,0.dp)
                                 .fillMaxWidth()
                         ) {
                             val iconModifier = Modifier
                                 .padding(10.dp, 0.dp, 20.dp, 0.dp)
                             //.size(35.dp)
                             Icon(
-                                painter = painterResource(id = R.drawable.icon_usage_info),
+                                painter = painterResource(id = R.drawable.icon_accessibility),
                                 contentDescription = "",
                                 modifier = iconModifier,
                                 tint = Color.Unspecified
@@ -827,16 +872,23 @@ fun GreetingPreview() {
                             Column(
                                 horizontalAlignment = Alignment.Start,
                             ) {
-                                Text("使用情况数据分析", fontWeight = FontWeight.Bold)
-
-                                LazyColumn {
-                                    items(count = usageDataList.size) {
-                                        Text("${usageDataList[it].str}: ${usageDataList[it].value}")
-                                    }
-                                }
-
+                                Text("启用增强后台运行方案", fontWeight = FontWeight.Bold)
                             }
+                            Switch(
+                                enabled = false,
+                                checked = status,
+                                onCheckedChange = {
+                                    status = it
+                                },
+                                modifier = Modifier.weight(70f)
+                            )
                         }
+                        Text("使用无障碍服务作为后台保活的增强后台运行方案暂不稳定，请期待后续更新",
+                            modifier = Modifier.padding(20.dp,0.dp,10.dp,10.dp),
+                            fontSize = 12.sp,
+                            lineHeight = 15.sp,
+                            color = Color.Gray
+                            )
                     }
                 }
                 /*

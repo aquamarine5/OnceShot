@@ -310,7 +310,7 @@ class ScreenShotListenManager private constructor(context: Context?) {
          * 获取屏幕分辨率
          */
         get() {
-            var screenSize: Point? = null
+            val screenSize: Point?
             try {
                 screenSize = Point()
                 val windowManager =
